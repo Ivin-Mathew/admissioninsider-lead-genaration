@@ -155,7 +155,6 @@ export default function RoleBasedLayout({
             onClick={handleLogout}
             className="w-full justify-start text-red-500 hover:text-red-700 hover:bg-red-50"
           >
-            <LogOut className="h-5 w-5 mr-3" />
             Logout
           </Button>
         </div>
