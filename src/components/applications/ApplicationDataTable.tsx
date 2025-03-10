@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
-  useReactTable,
+  useReactTable, ColumnDef,
   getSortedRowModel,
   getFilteredRowModel,
 } from "@tanstack/react-table";
@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Application, ApplicationStatus } from "@/types/application";
-import App from "next/app";
+import RowDataModal from "./RowDataModal"; // Import the new modal component
 
 interface ApplicationDataTableProps {
   userType: "admin" | "agent" | "counselor" | "client";
@@ -31,6 +31,9 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
   applicationData = [],
 }) => {
   const [globalFilter, setGlobalFilter] = useState("");
+  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   // Define column helper
   const columnHelper = createColumnHelper<Application>();
@@ -47,7 +50,14 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
     return arr.join(", ");
   };
 
-  // Define columns based on user type
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Define columns based on user type and screen width
   const getColumns = () => {
     // Common columns for all user types
     const commonColumns = [
@@ -63,10 +73,10 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
               info.getValue() === "pending"
                 ? "bg-yellow-500"
                 : info.getValue() === ApplicationStatus.ACCEPTED
-                ? "bg-green-500"
-                : info.getValue() === ApplicationStatus.REVIEW
-                ? "bg-blue-500"
-                : "bg-gray-500"
+                  ? "bg-green-500"
+                  : info.getValue() === ApplicationStatus.REVIEW
+                    ? "bg-blue-500"
+                    : "bg-gray-500"
             }
           >
             {info.getValue()}
@@ -91,23 +101,23 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
           ),
         }),
         ...commonColumns,
-        columnHelper.accessor("client_email", {
+        windowWidth > 768 && columnHelper.accessor("client_email", {
           header: "Email",
           cell: (info) => info.getValue(),
         }),
-        columnHelper.accessor("phone_number", {
+        windowWidth > 1024 && columnHelper.accessor("phone_number", {
           header: "Phone",
           cell: (info) => info.getValue(),
         }),
-        columnHelper.accessor("preferred_locations", {
+        windowWidth > 1280 && columnHelper.accessor("preferred_locations", {
           header: "Locations",
           cell: (info) => formatArray(info.getValue()),
         }),
-        columnHelper.accessor("preferred_colleges", {
+        windowWidth > 1280 && columnHelper.accessor("preferred_colleges", {
           header: "Colleges",
           cell: (info) => formatArray(info.getValue()),
         }),
-        columnHelper.accessor("agent_id", {
+        windowWidth > 1440 && columnHelper.accessor("agent_id", {
           header: "Agent",
           cell: (info) => (
             <span className="text-xs">
@@ -115,7 +125,7 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
             </span>
           ),
         }),
-        columnHelper.accessor("counselor_id", {
+        windowWidth > 1440 && columnHelper.accessor("counselor_id", {
           header: "Counselor",
           cell: (info) =>
             info.getValue() ? (
@@ -126,53 +136,101 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
               <Button>Assign</Button>
             ),
         }),
-        columnHelper.accessor("updated_at", {
+        windowWidth > 768 && columnHelper.accessor("updated_at", {
           header: "Last Updated",
           cell: (info) => formatDate(info.getValue()),
         }),
-      ];
+        columnHelper.display({
+          id: "actions",
+          header: "Actions",
+          cell: ({ row }) => (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedApplication(row.original);
+                setIsModalOpen(true);
+              }}
+            >
+              View Details
+            </Button>
+          ),
+        }),
+      ].filter(Boolean); // Filter out undefined columns
     }
 
     // Agent view
     else if (userType === "agent") {
       return [
         ...commonColumns,
-        columnHelper.accessor("client_email", {
+        windowWidth > 768 && columnHelper.accessor("client_email", {
           header: "Email",
           cell: (info) => info.getValue(),
         }),
-        columnHelper.accessor("phone_number", {
+        windowWidth > 1024 && columnHelper.accessor("phone_number", {
           header: "Phone",
           cell: (info) => info.getValue(),
         }),
-        columnHelper.accessor("preferred_locations", {
+        windowWidth > 1280 && columnHelper.accessor("preferred_locations", {
           header: "Locations",
           cell: (info) => formatArray(info.getValue()),
         }),
-      ];
+        columnHelper.display({
+          id: "actions",
+          header: "Actions",
+          cell: ({ row }) => (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedApplication(row.original);
+                setIsModalOpen(true);
+              }}
+            >
+              View Details
+            </Button>
+          ),
+        }),
+      ].filter(Boolean); // Filter out undefined columns
     }
 
     // Counselor view
     else if (userType === "counselor") {
       return [
         ...commonColumns,
-        columnHelper.accessor("completed_course", {
+        windowWidth > 768 && columnHelper.accessor("completed_course", {
           header: "Completed Course",
           cell: (info) => info.getValue(),
         }),
-        columnHelper.accessor("planned_courses", {
+        windowWidth > 1024 && columnHelper.accessor("planned_courses", {
           header: "Planned Courses",
           cell: (info) => formatArray(info.getValue()),
         }),
-        columnHelper.accessor("preferred_locations", {
+        windowWidth > 1280 && columnHelper.accessor("preferred_locations", {
           header: "Locations",
           cell: (info) => formatArray(info.getValue()),
         }),
-        columnHelper.accessor("preferred_colleges", {
+        windowWidth > 1280 && columnHelper.accessor("preferred_colleges", {
           header: "Colleges",
           cell: (info) => formatArray(info.getValue()),
         }),
-      ];
+        columnHelper.display({
+          id: "actions",
+          header: "Actions",
+          cell: ({ row }) => (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedApplication(row.original);
+                setIsModalOpen(true);
+              }}
+            >
+              View Details
+            </Button>
+          ),
+        }),
+      ].filter(Boolean); // Filter out undefined columns
     }
 
     // Client view (limited)
@@ -187,26 +245,42 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
           ),
         }),
         ...commonColumns,
-        columnHelper.accessor("planned_courses", {
+        windowWidth > 768 && columnHelper.accessor("planned_courses", {
           header: "Planned Courses",
           cell: (info) => formatArray(info.getValue()),
         }),
-        columnHelper.accessor("preferred_locations", {
+        windowWidth > 1024 && columnHelper.accessor("preferred_locations", {
           header: "Locations",
           cell: (info) => formatArray(info.getValue()),
         }),
-        columnHelper.accessor("preferred_colleges", {
+        windowWidth > 1280 && columnHelper.accessor("preferred_colleges", {
           header: "Selected Colleges",
           cell: (info) => formatArray(info.getValue()),
         }),
-      ];
+        columnHelper.display({
+          id: "actions",
+          header: "Actions",
+          cell: ({ row }) => (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSelectedApplication(row.original);
+                setIsModalOpen(true);
+              }}
+            >
+              View Details
+            </Button>
+          ),
+        }),
+      ].filter(Boolean); // Filter out undefined columns
     }
 
     // Default fallback
     return commonColumns;
   };
 
-  const columns = getColumns();
+  const columns = getColumns().filter(Boolean) as ColumnDef<Application, any>[];
 
   const table = useReactTable({
     data: applicationData,
@@ -263,9 +337,9 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </th>
                   ))}
                 </tr>
@@ -316,6 +390,13 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
           </Button>
         </div>
       </CardContent>
+      {selectedApplication && (
+        <RowDataModal
+          application={selectedApplication}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
     </Card>
   );
 };
