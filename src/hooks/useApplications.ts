@@ -6,6 +6,8 @@ import { toast } from "sonner";
  * Custom hook for handling application mutations using React Query.
  * Provides functionality to create a new application and manage loading/error states.
  */
+
+
 export const useApplicationMutation = () => {
   const queryClient = useQueryClient();
 

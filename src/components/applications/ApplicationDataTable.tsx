@@ -123,7 +123,7 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
                 {info.getValue()?.substring(0, 8) ?? "N/A"}...
               </span>
             ) : (
-              "Not Assigned"
+              <Button>Assign</Button>
             ),
         }),
         columnHelper.accessor("updated_at", {
