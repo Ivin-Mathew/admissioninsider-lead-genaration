@@ -1,29 +1,43 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
+// Retrieve Supabase credentials from environment variables
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 
+// Ensure Supabase credentials are available, otherwise throw an error
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase URL or Anon Key');
+  throw new Error("Missing Supabase URL or Anon Key");
 }
 
+// Initialize Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Function to get current user with role
+/**
+ * Retrieves the current authenticated user along with their role.
+ * 
+ * @returns The user object with role information, or null if no session exists.
+ */
 export async function getCurrentUser() {
-  const { data: { session } } = await supabase.auth.getSession();
-  
-  if (!session) return null;
-  
-  // Get the user's role from the profiles table
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', session.user.id)
+  // Get the current user session
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) return null; // Return null if no session is found
+
+  // Fetch the user's role from the "profiles" table
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("role") // Only fetch the role column for efficiency
+    .eq("id", session.user.id)
     .single();
-  
+
+  if (error) {
+    console.error("Error fetching user profile:", error.message);
+  }
+
   return {
     ...session.user,
-    role: profile?.role || 'agent', // Default to agent if role not found
+    role: profile?.role || "agent", // Default to "agent" if role is not found
   };
 }
