@@ -1,6 +1,14 @@
 import React from "react";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Phone, Mail, MapPin, School, User, Clock } from "lucide-react";
 import { Application } from "@/types/application";
 
 interface RowDataModalProps {
@@ -9,50 +17,144 @@ interface RowDataModalProps {
   onClose: () => void;
 }
 
-const RowDataModal: React.FC<RowDataModalProps> = ({ application, isOpen, onClose }) => {
+const RowDataModal: React.FC<RowDataModalProps> = ({
+  application,
+  isOpen,
+  onClose,
+}) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Application Details</DialogTitle>
+          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
+            <User className="h-6 w-6" />
+            Application Details
+          </DialogTitle>
           <DialogDescription>
-            Detailed information about the application.
+            Detailed information about {application.client_name}'s application
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <strong>Client Name:</strong> {application.client_name}
-          </div>
-          <div>
-            <strong>Email:</strong> {application.client_email}
-          </div>
-          <div>
-            <strong>Phone Number:</strong> {application.phone_number}
-          </div>
-          <div>
-            <strong>Preferred Locations:</strong> {application.preferred_locations.join(", ")}
-          </div>
-          <div>
-            <strong>Preferred Colleges:</strong> {application.preferred_colleges?.join(", ")}
-          </div>
-          <div>
-            <strong>Agent ID:</strong> {application.agent_id}
-          </div>
-          <div>
-            <strong>Counselor ID:</strong> {application.counselor_id}
-          </div>
-          <div>
-            <strong>Application Status:</strong> {application.application_status}
-          </div>
-          <div>
-            <strong>Created At:</strong> {new Date(application.created_at).toLocaleString()}
-          </div>
-          <div>
-            <strong>Last Updated:</strong> {new Date(application.updated_at).toLocaleString()}
-          </div>
-        </div>
-        <div className="flex justify-end mt-4">
-          <Button onClick={onClose}>Close</Button>
+
+        <Card className="mt-4">
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Client Name</p>
+                    <p className="text-base">{application.client_name}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Email</p>
+                    <a
+                      href={`mailto:${application.client_email}`}
+                      className="text-base text-primary hover:underline"
+                    >
+                      {application.client_email}
+                    </a>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Phone className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Phone Number</p>
+                    <a
+                      href={`tel:${application.phone_number}`}
+                      className="text-base text-primary hover:underline"
+                    >
+                      {application.phone_number}
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-start gap-2">
+                  <MapPin className="h-5 w-5 text-muted-foreground mt-1" />
+                  <div>
+                    <p className="text-sm font-medium">Preferred Locations</p>
+                    <p className="text-base">
+                      {application.preferred_locations.join(", ")}
+                    </p>
+                  </div>
+                </div>
+
+                {application.preferred_colleges && (
+                  <div className="flex items-start gap-2">
+                    <School className="h-5 w-5 text-muted-foreground mt-1" />
+                    <div>
+                      <p className="text-sm font-medium">Preferred Colleges</p>
+                      <p className="text-base">
+                        {application.preferred_colleges.join(", ")}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-4 border-t pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Agent ID</p>
+                    <p className="text-base">{application.agent_id}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Counselor ID</p>
+                    <p className="text-base">{application.counselor_id}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Application Status</p>
+                  <p className="text-base">{application.application_status}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Created At</p>
+                    <p className="text-base">
+                      {new Date(application.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Last Updated</p>
+                    <p className="text-base">
+                      {new Date(application.updated_at).toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-end mt-6">
+          <Button onClick={onClose} className="bg-primary hover:bg-primary/90">
+            Close
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
