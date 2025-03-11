@@ -1,3 +1,4 @@
+// filepath: d:\Coding\repositories\admissioninsider-lead-genaration\src\app\layout.tsx
 // src/app/layout.tsx
 "use client";
 import type { Metadata } from "next";
@@ -8,6 +9,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { Session } from "inspector/promises";
 import { SessionProvider } from "next-auth/react";
 import Providers from "./providers";
+import Redirect from "@/components/Redirect"; // Import the Redirect component
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,7 +29,10 @@ export default function RootLayout({
         >
           <SessionProvider>
             <Providers>
-              <AuthProvider>{children}</AuthProvider>
+              <AuthProvider>
+                <Redirect to="/dashboard" /> {/* Use the Redirect component */}
+                {children}
+              </AuthProvider>
             </Providers>
           </SessionProvider>
         </ThemeProvider>
