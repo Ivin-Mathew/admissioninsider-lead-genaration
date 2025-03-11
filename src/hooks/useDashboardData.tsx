@@ -18,6 +18,12 @@ interface StatusCount {
   count: string;
 }
 
+// Extended Application type with name fields
+interface ExtendedApplication extends Application {
+  counselor_name?: string;
+  agent_name?: string;
+}
+
 const fetchDashboardData = async (user: any, isAdmin: boolean, isCounselor: boolean, isAgent: boolean) => {
   if (!user) return { stats: {}, applicationData: [] };
 
@@ -117,6 +123,20 @@ const fetchDashboardData = async (user: any, isAdmin: boolean, isCounselor: bool
       totalAgents = agentCount || 0;
     }
 
+    // First get all profiles to use for lookups
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id, role");
+
+    if (profilesError) throw profilesError;
+
+    // Create counselor and agent maps for quick lookup
+    const profileMap = new Map();
+    
+    profiles?.forEach(profile => {
+      profileMap.set(profile.id, profile.role);
+    });
+
     // Fetch application data for the table
     let applicationQuery = supabase.from("applications").select("*");
 
@@ -132,6 +152,13 @@ const fetchDashboardData = async (user: any, isAdmin: boolean, isCounselor: bool
 
     if (applicationError) throw applicationError;
 
+    // Add names to application data
+    const processedApplications: ExtendedApplication[] = applications?.map((app: any) => ({
+      ...app,
+      counselor_name: app.counselor_id ? profileMap.get(app.counselor_id) || 'Not Found' : 'Not Assigned',
+      agent_name: app.agent_id ? profileMap.get(app.agent_id) || 'Not Found' : 'Not Assigned',
+    })) || [];
+
     return {
       stats: {
         totalApplications: totalApplications || 0,
@@ -142,7 +169,7 @@ const fetchDashboardData = async (user: any, isAdmin: boolean, isCounselor: bool
         totalCounselors,
         totalAgents,
       },
-      applicationData: applications || [],
+      applicationData: processedApplications,
     };
   } catch (error) {
     console.error("Error fetching dashboard data:", error);

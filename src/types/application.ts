@@ -43,7 +43,9 @@ export enum EducationLevel {
     preferred_locations: string[];
     preferred_colleges: string[] | null;
     agent_id: string | null;
+    agent_name: string | null;
     counselor_id: string | null;
+    counselor_name: string | null;
     application_status: ApplicationStatus;
     created_at: string; // ISO date string
     updated_at: string; // ISO date string
