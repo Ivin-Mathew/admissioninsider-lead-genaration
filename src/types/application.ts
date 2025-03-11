@@ -29,6 +29,7 @@ export enum EducationLevel {
     preferredLocations: string[];
     preferredColleges?: string[];
     agentId?: string;
+    counselorId?: string;
   }
   
   // Interface for the application database record
