@@ -5,7 +5,6 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/context/AuthContext";
-import { Session } from "inspector/promises";
 import { SessionProvider } from "next-auth/react";
 import Providers from "./providers";
 
@@ -18,6 +17,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <title>Peer Connect - Admission Insider</title>
+        <meta name="description" content="Your admission insider platform" />
+      </head>
       <body className={inter.className}>
         <ThemeProvider
           attribute="class"
