@@ -117,7 +117,7 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
           header: "Colleges",
           cell: (info) => formatArray(info.getValue()),
         }),
-        windowWidth > 1440 && columnHelper.accessor("agent_id", {
+        windowWidth > 1440 && columnHelper.accessor("agent_name", {
           header: "Agent",
           cell: (info) => (
             <span className="text-xs">
@@ -125,7 +125,7 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
             </span>
           ),
         }),
-        windowWidth > 1440 && columnHelper.accessor("counselor_id", {
+        windowWidth > 1440 && columnHelper.accessor("counselor_name", {
           header: "Counselor",
           cell: (info) =>
             info.getValue() ? (
@@ -135,11 +135,11 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
             ) : (
               <Button>Assign</Button>
             ),
-        }),
+        }),/* 
         windowWidth > 768 && columnHelper.accessor("updated_at", {
           header: "Last Updated",
           cell: (info) => formatDate(info.getValue()),
-        }),
+        }), */
         columnHelper.display({
           id: "actions",
           header: "Actions",
