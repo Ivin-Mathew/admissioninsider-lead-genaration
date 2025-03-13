@@ -42,12 +42,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const fetchInitialUser = async () => {
       setLoading(true);
       try {
-        const {
-          data: { user: authUser },
-          error,
-        } = await supabase.auth.getUser();
-        if (error) throw error;
-        if (authUser) {
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !sessionData.session) {
+          console.warn("No active session found. Redirecting to login...");
+          setUser(null);
+          router.push("/login");
+          return;
+        }
+
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+        const authUser = userData.user;
+        if (!authUser) {
+          console.warn("No user session found. Redirecting to login...");
+          setUser(null);
+          router.push("/login");
+          return;
+        }
+        else {
           const { data: profile, error: profileError } = await supabase
             .from("profiles")
             .select("role")
@@ -69,50 +81,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     fetchInitialUser();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+      (async () => {
         if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-          const {
-            data: { user: updatedAuthUser },
-            error,
-          } = await supabase.auth.getUser();
-          if (error) {
-            console.error("Error in auth state change:", error);
-            return;
-          }
-          if (updatedAuthUser) {
-            const { data: profile, error: profileError } = await supabase
-              .from("profiles")
-              .select("role")
-              .eq("id", updatedAuthUser.id)
-              .single();
-            if (profileError) {
-              console.error("Profile fetch error:", profileError);
+          try {
+            const { data, error } = await supabase.auth.getUser();
+            const updatedAuthUser = data?.user;
+            if (error) {
+              console.error("Error in auth state change:", error);
               return;
             }
-            setUser({
-              id: updatedAuthUser.id,
-              email: updatedAuthUser.email || "",
-              role: profile?.role || "agent",
-            });
+            if (updatedAuthUser) {
+              const { data: profile, error: profileError } = await supabase
+                .from("profiles")
+                .select("role")
+                .eq("id", updatedAuthUser.id)
+                .single();
+              if (profileError) {
+                console.error("Profile fetch error:", profileError);
+                return;
+              }
+              setUser({
+                id: updatedAuthUser.id,
+                email: updatedAuthUser.email || "",
+                role: profile?.role || "agent",
+              });
+            }
+          } catch (error) {
+            console.error("Error updating user session:", error);
           }
         } else if (event === "SIGNED_OUT") {
           setUser(null);
           router.push("/login");
         }
-      }
-    );
-
-    return () => authListener.subscription.unsubscribe();
+      })();
+    });
+  
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, [router]);
 
   const login = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw error;
-    return data;
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+  
+      await supabase.auth.refreshSession();
+      return data;
+    } catch (error) {
+      console.error("Login failed", error);
+      throw error;
+    }
   };
 
   const signup = async (
@@ -135,13 +158,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+  
+      setUser(null);
+      await supabase.auth.getSession(); 
+      await router.push("/login"); 
+    } catch (error) {
       console.error("Logout failed", error);
-      throw error;
     }
-    setUser(null);
-    router.push("/login");
   };
 
   const value: AuthContextType = {
