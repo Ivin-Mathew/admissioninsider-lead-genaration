@@ -185,7 +185,7 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
           header: "Actions",
           cell: ({ row }) => (
             <Button
-              variant="outline"
+              variant="inverted"
               size="sm"
               onClick={() => {
                 setSelectedApplication(row.original);
