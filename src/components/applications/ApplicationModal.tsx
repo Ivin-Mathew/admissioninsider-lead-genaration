@@ -180,6 +180,7 @@ const ApplicationFormModal = () => {
       preferredLocations: filteredLocations,
       preferredColleges: filteredColleges,
       agentId: user?.id,
+      counselorId: user?.role === 'counselor' ? user.id : undefined,
     };
     console.log(submissionData);
     const response = await createApplication(submissionData);

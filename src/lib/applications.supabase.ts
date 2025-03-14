@@ -35,6 +35,7 @@ export async function submitApplication(applicationData: ApplicationFormData) {
         preferred_colleges: applicationData.preferredColleges || [], // Default to empty array if not provided
         application_status: "pending", // Default status for new applications
         agent_id: applicationData.agentId || null, // Default to null if not provided
+        counselor_id: applicationData.counselorId || null, // Default to null if not provided
       },
     ])
     .select(); // Fetch the inserted record
