@@ -51,6 +51,12 @@ export enum EducationLevel {
     updated_at: string; // ISO date string
   }
   
+  // Extended Application type with name fields
+export interface ExtendedApplication extends Application {
+  counselor_name: string | null;
+  agent_name: string | null;
+}
+
   // Type for server response when creating a new application
   export type ApplicationCreateResponse = {
     data: Application | null;
