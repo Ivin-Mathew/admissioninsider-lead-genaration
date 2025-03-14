@@ -1,5 +1,3 @@
-"use client";
-
 import {
   createContext,
   useContext,
@@ -42,7 +40,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const fetchInitialUser = async () => {
       setLoading(true);
       try {
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        const { data: sessionData, error: sessionError } =
+          await supabase.auth.getSession();
         if (sessionError || !sessionData.session) {
           console.warn("No active session found. Redirecting to login...");
           setUser(null);
@@ -50,7 +49,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const { data: userData, error: userError } = await supabase.auth.getUser();
+        const { data: userData, error: userError } =
+          await supabase.auth.getUser();
         if (userError) throw userError;
         const authUser = userData.user;
         if (!authUser) {
@@ -58,8 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(null);
           router.push("/login");
           return;
-        }
-        else {
+        } else {
           const { data: profile, error: profileError } = await supabase
             .from("profiles")
             .select("role")
@@ -71,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email: authUser.email || "",
             role: profile?.role || "agent",
           });
+          router.push("/dashboard"); // Redirect to dashboard after setting user
         }
       } catch (error) {
         console.error("Error fetching initial user:", error);
@@ -81,42 +81,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     fetchInitialUser();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      (async () => {
-        if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-          try {
-            const { data, error } = await supabase.auth.getUser();
-            const updatedAuthUser = data?.user;
-            if (error) {
-              console.error("Error in auth state change:", error);
-              return;
-            }
-            if (updatedAuthUser) {
-              const { data: profile, error: profileError } = await supabase
-                .from("profiles")
-                .select("role")
-                .eq("id", updatedAuthUser.id)
-                .single();
-              if (profileError) {
-                console.error("Profile fetch error:", profileError);
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        (async () => {
+          if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+            try {
+              const { data, error } = await supabase.auth.getUser();
+              const updatedAuthUser = data?.user;
+              if (error) {
+                console.error("Error in auth state change:", error);
                 return;
               }
-              setUser({
-                id: updatedAuthUser.id,
-                email: updatedAuthUser.email || "",
-                role: profile?.role || "agent",
-              });
+              if (updatedAuthUser) {
+                const { data: profile, error: profileError } = await supabase
+                  .from("profiles")
+                  .select("role")
+                  .eq("id", updatedAuthUser.id)
+                  .single();
+                if (profileError) {
+                  console.error("Profile fetch error:", profileError);
+                  return;
+                }
+                setUser({
+                  id: updatedAuthUser.id,
+                  email: updatedAuthUser.email || "",
+                  role: profile?.role || "agent",
+                });
+                router.push("/dashboard"); // Redirect to dashboard after setting user
+              }
+            } catch (error) {
+              console.error("Error updating user session:", error);
             }
-          } catch (error) {
-            console.error("Error updating user session:", error);
+          } else if (event === "SIGNED_OUT") {
+            setUser(null);
+            router.push("/login");
           }
-        } else if (event === "SIGNED_OUT") {
-          setUser(null);
-          router.push("/login");
-        }
-      })();
-    });
-  
+        })();
+      }
+    );
+
     return () => {
       authListener.subscription.unsubscribe();
     };
@@ -128,9 +131,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email,
         password,
       });
+
       if (error) throw error;
-  
-      await supabase.auth.refreshSession();
+
+      router.push("/dashboard");
       return data;
     } catch (error) {
       console.error("Login failed", error);
@@ -161,10 +165,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-  
+
       setUser(null);
-      await supabase.auth.getSession(); 
-      await router.push("/login"); 
+      await supabase.auth.getSession();
+      await router.push("/login");
     } catch (error) {
       console.error("Logout failed", error);
     }

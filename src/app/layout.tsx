@@ -20,11 +20,11 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/login"); 
+      router.push("/login");
     }
   }, [status, router]);
 
-  if (status === "loading") return <p>Loading...</p>; 
+  if (status === "loading") return <p>Loading...</p>;
 
   return <>{children}</>;
 }
@@ -43,22 +43,13 @@ export default function RootLayout({
         <meta name="description" content="Your admission insider platform" />
       </head>
       <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <SessionProvider session={pageProps?.session}>
-            <Providers>
-              <AuthProvider>
-                <ProtectedRoute>
-                  {children}
-                </ProtectedRoute>
-              </AuthProvider>
-            </Providers>
-          </SessionProvider>
-        </ThemeProvider>
+        <SessionProvider session={pageProps?.session}>
+          <Providers>
+            <AuthProvider>
+              <ProtectedRoute>{children}</ProtectedRoute>
+            </AuthProvider>
+          </Providers>
+        </SessionProvider>
       </body>
     </html>
   );
