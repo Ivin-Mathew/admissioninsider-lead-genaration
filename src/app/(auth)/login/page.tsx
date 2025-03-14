@@ -28,8 +28,8 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      await login(email, password);
-      router.push("/dashboard");
+      const data = await login(email, password);
+      console.log(data);
     } catch (error: any) {
       toast.error("Login failed", {
         description:

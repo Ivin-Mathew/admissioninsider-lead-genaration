@@ -3,7 +3,8 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
-  useReactTable, ColumnDef,
+  useReactTable,
+  ColumnDef,
   getSortedRowModel,
   getFilteredRowModel,
 } from "@tanstack/react-table";
@@ -31,7 +32,8 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
   applicationData = [],
 }) => {
   const [globalFilter, setGlobalFilter] = useState("");
-  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [selectedApplication, setSelectedApplication] =
+    useState<Application | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
@@ -73,10 +75,10 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
               info.getValue() === "pending"
                 ? "bg-yellow-500"
                 : info.getValue() === ApplicationStatus.ACCEPTED
-                  ? "bg-green-500"
-                  : info.getValue() === ApplicationStatus.REVIEW
-                    ? "bg-blue-500"
-                    : "bg-gray-500"
+                ? "bg-green-500"
+                : info.getValue() === ApplicationStatus.REVIEW
+                ? "bg-blue-500"
+                : "bg-gray-500"
             }
           >
             {info.getValue()}
@@ -101,51 +103,51 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
           ),
         }),
         ...commonColumns,
-        windowWidth > 768 && columnHelper.accessor("client_email", {
-          header: "Email",
-          cell: (info) => info.getValue(),
-        }),
-        windowWidth > 1024 && columnHelper.accessor("phone_number", {
-          header: "Phone",
-          cell: (info) => info.getValue(),
-        }),
-        windowWidth > 1280 && columnHelper.accessor("preferred_locations", {
-          header: "Locations",
-          cell: (info) => formatArray(info.getValue()),
-        }),
-        windowWidth > 1280 && columnHelper.accessor("preferred_colleges", {
-          header: "Colleges",
-          cell: (info) => formatArray(info.getValue()),
-        }),
-        windowWidth > 1440 && columnHelper.accessor("agent_name", {
-          header: "Agent",
-          cell: (info) => (
-            <span className="text-xs">
-              {info.getValue()?.substring(0, 8) ?? "N/A"}...
-            </span>
-          ),
-        }),
-        windowWidth > 1440 && columnHelper.accessor("counselor_name", {
-          header: "Counselor",
-          cell: (info) =>
-            info.getValue() ? (
-              <span className="text-xs">
-                {info.getValue()?.substring(0, 8) ?? "N/A"}...
-              </span>
-            ) : (
-              <Button>Assign</Button>
-            ),
-        }),/* 
+        windowWidth > 768 &&
+          columnHelper.accessor("client_email", {
+            header: "Email",
+            cell: (info) => info.getValue(),
+          }),
+        windowWidth > 1024 &&
+          columnHelper.accessor("phone_number", {
+            header: "Phone",
+            cell: (info) => info.getValue(),
+          }),
+        windowWidth > 1280 &&
+          columnHelper.accessor("preferred_locations", {
+            header: "Locations",
+            cell: (info) => formatArray(info.getValue()),
+          }),
+        windowWidth > 1280 &&
+          columnHelper.accessor("preferred_colleges", {
+            header: "Colleges",
+            cell: (info) => formatArray(info.getValue()),
+          }),
+        windowWidth > 1440 &&
+          columnHelper.accessor("agent_name", {
+            header: "Agent",
+            cell: (info) => <span className="text-xs">{info.getValue()}</span>,
+          }),
+        windowWidth > 1440 &&
+          columnHelper.accessor("counselor_name", {
+            header: "Counselor",
+            cell: (info) =>
+              info.getValue() ? (
+                <span className="text-xs">{info.getValue()}</span>
+              ) : (
+                <Button>Assign</Button>
+              ),
+          }) /* 
         windowWidth > 768 && columnHelper.accessor("updated_at", {
           header: "Last Updated",
           cell: (info) => formatDate(info.getValue()),
-        }), */
+        }), */,
         columnHelper.display({
           id: "actions",
           header: "Actions",
           cell: ({ row }) => (
             <Button
-              variant="outline"
+              variant="inverted"
               size="sm"
               onClick={() => {
                 setSelectedApplication(row.original);
@@ -163,18 +165,21 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
     else if (userType === "agent") {
       return [
         ...commonColumns,
-        windowWidth > 768 && columnHelper.accessor("client_email", {
-          header: "Email",
-          cell: (info) => info.getValue(),
-        }),
-        windowWidth > 1024 && columnHelper.accessor("phone_number", {
-          header: "Phone",
-          cell: (info) => info.getValue(),
-        }),
-        windowWidth > 1280 && columnHelper.accessor("preferred_locations", {
-          header: "Locations",
-          cell: (info) => formatArray(info.getValue()),
-        }),
+        windowWidth > 768 &&
+          columnHelper.accessor("client_email", {
+            header: "Email",
+            cell: (info) => info.getValue(),
+          }),
+        windowWidth > 1024 &&
+          columnHelper.accessor("phone_number", {
+            header: "Phone",
+            cell: (info) => info.getValue(),
+          }),
+        windowWidth > 1280 &&
+          columnHelper.accessor("preferred_locations", {
+            header: "Locations",
+            cell: (info) => formatArray(info.getValue()),
+          }),
         columnHelper.display({
           id: "actions",
           header: "Actions",
@@ -198,22 +203,26 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
     else if (userType === "counselor") {
       return [
         ...commonColumns,
-        windowWidth > 768 && columnHelper.accessor("completed_course", {
-          header: "Completed Course",
-          cell: (info) => info.getValue(),
-        }),
-        windowWidth > 1024 && columnHelper.accessor("planned_courses", {
-          header: "Planned Courses",
-          cell: (info) => formatArray(info.getValue()),
-        }),
-        windowWidth > 1280 && columnHelper.accessor("preferred_locations", {
-          header: "Locations",
-          cell: (info) => formatArray(info.getValue()),
-        }),
-        windowWidth > 1280 && columnHelper.accessor("preferred_colleges", {
-          header: "Colleges",
-          cell: (info) => formatArray(info.getValue()),
-        }),
+        windowWidth > 768 &&
+          columnHelper.accessor("completed_course", {
+            header: "Completed Course",
+            cell: (info) => info.getValue(),
+          }),
+        windowWidth > 1024 &&
+          columnHelper.accessor("planned_courses", {
+            header: "Planned Courses",
+            cell: (info) => formatArray(info.getValue()),
+          }),
+        windowWidth > 1280 &&
+          columnHelper.accessor("preferred_locations", {
+            header: "Locations",
+            cell: (info) => formatArray(info.getValue()),
+          }),
+        windowWidth > 1280 &&
+          columnHelper.accessor("preferred_colleges", {
+            header: "Colleges",
+            cell: (info) => formatArray(info.getValue()),
+          }),
         columnHelper.display({
           id: "actions",
           header: "Actions",
@@ -245,18 +254,21 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
           ),
         }),
         ...commonColumns,
-        windowWidth > 768 && columnHelper.accessor("planned_courses", {
-          header: "Planned Courses",
-          cell: (info) => formatArray(info.getValue()),
-        }),
-        windowWidth > 1024 && columnHelper.accessor("preferred_locations", {
-          header: "Locations",
-          cell: (info) => formatArray(info.getValue()),
-        }),
-        windowWidth > 1280 && columnHelper.accessor("preferred_colleges", {
-          header: "Selected Colleges",
-          cell: (info) => formatArray(info.getValue()),
-        }),
+        windowWidth > 768 &&
+          columnHelper.accessor("planned_courses", {
+            header: "Planned Courses",
+            cell: (info) => formatArray(info.getValue()),
+          }),
+        windowWidth > 1024 &&
+          columnHelper.accessor("preferred_locations", {
+            header: "Locations",
+            cell: (info) => formatArray(info.getValue()),
+          }),
+        windowWidth > 1280 &&
+          columnHelper.accessor("preferred_colleges", {
+            header: "Selected Colleges",
+            cell: (info) => formatArray(info.getValue()),
+          }),
         columnHelper.display({
           id: "actions",
           header: "Actions",
@@ -337,9 +349,9 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                     </th>
                   ))}
                 </tr>

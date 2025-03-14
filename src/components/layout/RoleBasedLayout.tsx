@@ -40,12 +40,6 @@ export default function RoleBasedLayout({
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login");
-    }
-  }, [user, loading, router]);
-
   const handleLogout = async () => {
     try {
       await logout();
