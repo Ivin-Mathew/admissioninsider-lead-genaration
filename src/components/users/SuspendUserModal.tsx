@@ -1,4 +1,4 @@
-"use client";
+/* "use client";
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
 import { useUpdateUserStatus } from "@/hooks/useUsers";
 import { User } from "@/types/user";
 
@@ -120,3 +121,4 @@ export const ChangeUserStatusDialog = ({
     </Dialog>
   );
 };
+ */

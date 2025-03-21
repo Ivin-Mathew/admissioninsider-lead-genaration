@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from 'axios';
+/* import axios, { AxiosResponse } from 'axios';
 import { User, CreateUserDTO, UpdateUserStatusDTO, UserFilters, PaginatedResponse } from '@/types/user';
 
 const BASE_URL = 'https://backend.lejit.ai/backend/api/adminModule';
@@ -77,4 +77,4 @@ export const deleteUser = async (
       'Content-Type': 'application/json'
     }
   });
-};
+}; */
