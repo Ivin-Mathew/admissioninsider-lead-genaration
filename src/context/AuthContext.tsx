@@ -133,7 +133,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
         options: {
           // Session will expire when browser is closed
-          redirectTo: typeof window !== 'undefined' ? window.location.origin + '/dashboard' : undefined,
         },
       });
 
