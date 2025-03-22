@@ -1,4 +1,3 @@
-// src/app/layout.tsx
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -7,7 +6,7 @@ import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
-// Define metadata for the page
+// Define metadata using Next.js metadata API
 export const metadata: Metadata = {
   title: "Peer Connect - Admission Insider",
   description: "Your admission insider platform",
