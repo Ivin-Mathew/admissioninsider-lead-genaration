@@ -29,8 +29,21 @@ export default function Login() {
 
     try {
       const data = await login(email, password);
-      console.log(data);
+      console.log("Login successful:", data);
+      
+      // Show success message
+      toast.success("Login successful", {
+        description: "Redirecting to dashboard...",
+      });
+
+      // Redirect to dashboard after successful login
+      router.push("/dashboard");
+      
+      // Force reload to ensure authentication state is updated everywhere
+      // This is especially helpful for persistent auth issues
+      // router.refresh(); // Uncomment this if you have router caching issues
     } catch (error: any) {
+      console.error("Login error:", error);
       toast.error("Login failed", {
         description:
           error.message || "Please check your credentials and try again.",
