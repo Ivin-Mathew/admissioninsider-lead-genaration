@@ -21,20 +21,25 @@ import {
 } from "@/components/ui/select";
 import { Application, ApplicationStatus } from "@/types/application";
 import RowDataModal from "./RowDataModal"; // Import the new modal component
+import { Edit, Eye } from "lucide-react";
+import EditApplicationModal from "./EditApplicationModal";
 
 interface ApplicationDataTableProps {
   userType: "admin" | "agent" | "counselor" | "client";
   applicationData: Application[];
+  onApplicationUpdated?: (updatedApplication: Application) => void;
 }
 
 const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
   userType = "admin",
   applicationData = [],
+  onApplicationUpdated = () => {},
 }) => {
   const [globalFilter, setGlobalFilter] = useState("");
   const [selectedApplication, setSelectedApplication] =
     useState<Application | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
   // Define column helper
@@ -58,6 +63,12 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Handle application update
+  const handleApplicationUpdate = (updatedApplication: Application) => {
+    // Update the application data in the parent component
+    onApplicationUpdated(updatedApplication);
+  };
 
   // Define columns based on user type and screen width
   const getColumns = () => {
@@ -126,36 +137,39 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
         windowWidth > 1440 &&
           columnHelper.accessor("agent_name", {
             header: "Agent",
-            cell: (info) => <span className="text-xs">{info.getValue()}</span>,
+            cell: (info) => <span className="text-xs">{info.getValue() || "None"}</span>,
           }),
         windowWidth > 1440 &&
           columnHelper.accessor("counselor_name", {
             header: "Counselor",
-            cell: (info) =>
-              info.getValue() ? (
-                <span className="text-xs">{info.getValue()}</span>
-              ) : (
-                <Button>Assign</Button>
-              ),
-          }) /* 
-        windowWidth > 768 && columnHelper.accessor("updated_at", {
-          header: "Last Updated",
-          cell: (info) => formatDate(info.getValue()),
-        }), */,
+            cell: (info) => <span className="text-xs">{info.getValue() || "None"}</span>,
+          }),
         columnHelper.display({
           id: "actions",
           header: "Actions",
           cell: ({ row }) => (
-            <Button
-              variant="inverted"
-              size="sm"
-              onClick={() => {
-                setSelectedApplication(row.original);
-                setIsModalOpen(true);
-              }}
-            >
-              View Details
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSelectedApplication(row.original);
+                  setIsViewModalOpen(true);
+                }}
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSelectedApplication(row.original);
+                  setIsEditModalOpen(true);
+                }}
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+            </div>
           ),
         }),
       ].filter(Boolean); // Filter out undefined columns
@@ -185,11 +199,11 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
           header: "Actions",
           cell: ({ row }) => (
             <Button
-              variant="outline"
+              variant="inverted"
               size="sm"
               onClick={() => {
                 setSelectedApplication(row.original);
-                setIsModalOpen(true);
+                setIsViewModalOpen(true);
               }}
             >
               View Details
@@ -232,7 +246,7 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
               size="sm"
               onClick={() => {
                 setSelectedApplication(row.original);
-                setIsModalOpen(true);
+                setIsViewModalOpen(true);
               }}
             >
               View Details
@@ -278,7 +292,7 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
               size="sm"
               onClick={() => {
                 setSelectedApplication(row.original);
-                setIsModalOpen(true);
+                setIsViewModalOpen(true);
               }}
             >
               View Details
@@ -402,11 +416,22 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
           </Button>
         </div>
       </CardContent>
+      {/* View Modal */}
       {selectedApplication && (
         <RowDataModal
           application={selectedApplication}
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          isOpen={isViewModalOpen}
+          onClose={() => setIsViewModalOpen(false)}
+        />
+      )}
+      
+      {/* Edit Modal - Only for admin */}
+      {userType === "admin" && selectedApplication && (
+        <EditApplicationModal
+          application={selectedApplication}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onUpdate={handleApplicationUpdate}
         />
       )}
     </Card>

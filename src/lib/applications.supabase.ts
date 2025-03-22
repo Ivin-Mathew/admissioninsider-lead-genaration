@@ -35,6 +35,7 @@ export async function submitApplication(applicationData: ApplicationFormData) {
         preferred_colleges: applicationData.preferredColleges || [], // Default to empty array if not provided
         application_status: "pending", // Default status for new applications
         agent_id: applicationData.agentId || null, // Default to null if not provided
+        counselor_id: applicationData.counselorId || null, // Default to null if not provided
       },
     ])
     .select(); // Fetch the inserted record
@@ -205,3 +206,62 @@ export const fetchDashboardData = async (user: any, isAdmin: boolean, isCounselo
     throw error;
   }
 };
+
+/**
+ * Updates an application in the database
+ * @param applicationId The ID of the application to update
+ * @param updates The fields to update
+ * @returns The updated application
+ */
+export async function updateApplication(applicationId: string, updates: Partial<Application>) {
+  try {
+    const { data, error } = await supabase
+      .from("applications")
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString()
+      })
+      .eq("application_id", applicationId)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+
+    // If the application has an agent or counselor, fetch their names
+    let extendedData: ExtendedApplication = { ...data };
+
+    if (data.agent_id || data.counselor_id) {
+      const idsToFetch = [
+        ...(data.agent_id ? [data.agent_id] : []),
+        ...(data.counselor_id ? [data.counselor_id] : []),
+      ];
+
+      if (idsToFetch.length > 0) {
+        const { data: profiles, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, name, email")
+          .in("id", idsToFetch);
+
+        if (profileError) throw profileError;
+
+        const profileMap = new Map();
+        profiles?.forEach(profile => {
+          profileMap.set(profile.id, { name: profile.name || profile.email || "Unknown" });
+        });
+
+        extendedData.agent_name = data.agent_id && profileMap.get(data.agent_id) 
+          ? profileMap.get(data.agent_id).name 
+          : 'Not Assigned';
+          
+        extendedData.counselor_name = data.counselor_id && profileMap.get(data.counselor_id) 
+          ? profileMap.get(data.counselor_id).name 
+          : 'Not Assigned';
+      }
+    }
+
+    return extendedData;
+  } catch (error) {
+    console.error("Error updating application:", error);
+    throw error;
+  }
+}

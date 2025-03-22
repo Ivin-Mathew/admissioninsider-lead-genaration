@@ -16,8 +16,8 @@ export const useApplicationMutation = () => {
     mutationFn: submitApplication,
     onSuccess: () => {
       // Invalidate related queries to ensure fresh data after mutation
-      queryClient.invalidateQueries({ queryKey: ["lots"] });
-      toast.success("New lot created successfully");
+      queryClient.invalidateQueries({ queryKey: ["dashboardData"] });
+      toast.success("New application created successfully");
     },
     onError: (error) => {
       toast.error(`Error creating lot: ${(error as Error).message}`);

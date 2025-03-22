@@ -51,7 +51,14 @@ interface FormData {
   preferredColleges: string[];
 }
 
-const ApplicationFormModal = () => {
+// Add the onApplicationCreated prop to the component
+interface ApplicationFormModalProps {
+  onApplicationCreated?: () => Promise<void>;
+}
+
+const ApplicationFormModal: React.FC<ApplicationFormModalProps> = ({ 
+  onApplicationCreated = async () => {} // Default empty function if not provided
+}) => {
   const { user } = useAuth();
   const [plannedCourses, setPlannedCourses] = React.useState<string[]>([""]);
   const [preferredLocations, setPreferredLocations] = React.useState<string[]>([
@@ -173,17 +180,28 @@ const ApplicationFormModal = () => {
       return;
     }
 
-    const submissionData = {
-      ...data,
-      completedCourse: data.completedCourse as EducationLevel,
-      plannedCourses: filteredCourses,
-      preferredLocations: filteredLocations,
-      preferredColleges: filteredColleges,
-      agentId: user?.id,
-    };
-    console.log(submissionData);
-    const response = await createApplication(submissionData);
-    handleClose();
+    try {
+      const submissionData = {
+        ...data,
+        completedCourse: data.completedCourse as EducationLevel,
+        plannedCourses: filteredCourses,
+        preferredLocations: filteredLocations,
+        preferredColleges: filteredColleges,
+        agentId: user?.role === 'agent' ? user?.id : undefined,
+        counselorId: user?.role === 'counselor' ? user?.id : undefined,
+      };
+      
+      console.log(submissionData);
+      const response = await createApplication(submissionData);
+      
+      // Call the onApplicationCreated callback after successful creation
+      await onApplicationCreated();
+      
+      handleClose();
+    } catch (error) {
+      console.error("Error submitting application:", error);
+      setFormError("An error occurred while submitting the application.");
+    }
   };
 
   function handleClose() {
@@ -195,6 +213,7 @@ const ApplicationFormModal = () => {
     setFormSuccess(false);
     setIsOpen(false);
   }
+
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
