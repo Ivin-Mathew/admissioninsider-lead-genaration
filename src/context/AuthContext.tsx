@@ -164,18 +164,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     role: "admin" | "counselor" | "agent" = "agent"
   ) => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) throw error;
+    try {
+      // Simple signup without email confirmation
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            role: role
+          },
+          // Skip email confirmation
+          emailRedirectTo: undefined
+        }
+      });
 
-    if (data.user && role !== "agent") {
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ role })
-        .eq("id", data.user.id);
-      if (updateError) throw updateError;
+      if (error) {
+        throw error;
+      }
+
+      // Create or update the profile
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .upsert({
+            id: data.user.id,
+            role: role,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+        if (profileError) {
+          throw profileError;
+        }
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Signup error:", error);
+      throw error;
     }
-
-    return data;
   };
 
   const logout = async () => {
@@ -183,7 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // First clear any local storage data
       if (typeof window !== 'undefined') {
         localStorage.removeItem('supabase.auth.token');
-        
+
         // Clear all local storage data related to Supabase
         Object.keys(localStorage).forEach(key => {
           if (key.startsWith('supabase.auth.')) {
@@ -191,20 +218,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         });
       }
-      
+
       // Then sign out from Supabase
       const { error } = await supabase.auth.signOut({
         scope: 'local' // This removes cookies & local storage
       });
-      
+
       if (error) throw error;
 
       // Clear user state
       setUser(null);
-      
+
       // Double-check session is gone
       await supabase.auth.getSession();
-      
+
       // Redirect to login
       await router.push("/login");
     } catch (error) {
