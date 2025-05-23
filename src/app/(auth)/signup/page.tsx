@@ -13,41 +13,54 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Lock, Mail, LogIn } from "lucide-react";
+import { Lock, Mail, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-export default function Login() {
+export default function Signup() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [role, setRole] = useState<"admin" | "counselor" | "agent">("agent");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const { login } = useAuth();
+  const { signup } = useAuth();
   const router = useRouter();
 
-  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSignup = async (e: FormEvent) => {
     e.preventDefault();
+
+    // Simple password match validation
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match", {
+        description: "Please make sure your passwords match.",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const data = await login(email, password);
-      console.log("Login successful:", data);
+      const data = await signup(email, password, role);
 
-      // Show success message
-      toast.success("Login successful", {
-        description: "Redirecting to dashboard...",
+      toast.success("Account created successfully", {
+        description: "You can now log in with your credentials.",
       });
 
-      // Redirect to dashboard after successful login
-      router.push("/dashboard");
-
-      // Force reload to ensure authentication state is updated everywhere
-      // This is especially helpful for persistent auth issues
-      // router.refresh(); // Uncomment this if you have router caching issues
+      // Redirect to login page after successful signup
+      router.push("/login");
     } catch (error: any) {
-      console.error("Login error:", error);
-      toast.error("Login failed", {
-        description:
-          error.message || "Please check your credentials and try again.",
+      console.error("Signup error:", error);
+
+      toast.error("Signup failed", {
+        description: error.message || "Please check your information and try again.",
       });
     } finally {
       setIsLoading(false);
@@ -59,14 +72,14 @@ export default function Login() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
-            Lead Generation App
+            Create an Account
           </CardTitle>
           <CardDescription className="text-center">
-            Enter your credentials to access your account
+            Enter your information to create an account
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleSignup} className="space-y-4">
             <div className="space-y-2">
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
@@ -93,6 +106,37 @@ export default function Login() {
                 />
               </div>
             </div>
+            <div className="space-y-2">
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                <Input
+                  type="password"
+                  placeholder="Confirm Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="pl-10"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="role">User Role</Label>
+              <Select
+                value={role}
+                onValueChange={(value) => setRole(value as "admin" | "counselor" | "agent")}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="agent">Agent</SelectItem>
+                  <SelectItem value="counselor">Counselor</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <span className="flex items-center justify-center">
@@ -119,22 +163,19 @@ export default function Login() {
                   Processing...
                 </span>
               ) : (
-                <span className="flex items-center justify-center">
-                  <LogIn className="mr-2 h-5 w-5" /> Sign In
-                </span>
+                <>
+                  <UserPlus className="mr-2 h-4 w-4" /> Sign Up
+                </>
               )}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <div className="text-center text-sm text-gray-500">
-            Don't have an account?{" "}
-            <Link href="/signup" className="text-blue-600 hover:underline">
-              Sign up
+            Already have an account?{" "}
+            <Link href="/login" className="text-blue-600 hover:underline">
+              Log in
             </Link>
-          </div>
-          <div className="text-center text-sm text-gray-500">
-            Contact admin if you need special account access
           </div>
         </CardFooter>
       </Card>

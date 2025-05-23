@@ -1,8 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Admission Insider Lead Generation App
+
+This is a Next.js application with Supabase authentication and database integration.
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+1. Node.js 18+ installed
+2. A Supabase account and project
+3. Environment variables set up
+
+### Setting up Supabase
+
+1. Create a new Supabase project at [https://supabase.com](https://supabase.com)
+2. Run the schema SQL in the Supabase SQL editor:
+   - Navigate to the SQL Editor in your Supabase dashboard
+   - Copy and paste the contents of `supabase/schema.sql`
+   - Run the SQL to create the necessary tables and types
+3. Set up the triggers for user creation:
+   - Navigate to the SQL Editor in your Supabase dashboard
+   - Copy and paste the contents of `supabase/triggers.sql`
+   - Run the SQL to create the necessary triggers and policies
+4. Configure Simple Authentication:
+   - Go to Authentication > Providers
+   - Make sure Email provider is enabled
+   - **Disable** the "Confirm email" option
+   - See `docs/supabase-setup.md` for detailed instructions
+
+### Environment Setup
+
+Create a `.env.local` file in the root directory with the following variables:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### Running the Application
+
+Run the development server:
 
 ```bash
 npm run dev
@@ -10,15 +46,9 @@ npm run dev
 yarn dev
 # or
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
 
