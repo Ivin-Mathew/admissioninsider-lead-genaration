@@ -19,6 +19,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<any>;
   signup: (
+    username: string,
     email: string,
     password: string,
     role?: "admin" | "counselor" | "agent"
@@ -160,6 +161,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signup = async (
+    username: string,
     email: string,
     password: string,
     role: "admin" | "counselor" | "agent" = "agent"
@@ -171,10 +173,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
         options: {
           data: {
-            role: role
+            username: username,
+            role: role,
           },
-          // Skip email confirmation
-          emailRedirectTo: undefined
         }
       });
 
@@ -188,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from("profiles")
           .upsert({
             id: data.user.id,
+            username: username,
             role: role,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
