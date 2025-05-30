@@ -38,6 +38,7 @@ interface EditApplicationModalProps {
 interface UserOption {
   id: string;
   role: string;
+  username:string;
   email?: string;
 }
 
@@ -84,7 +85,7 @@ const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
       // Fetch counselors with email information
       const { data: counselorsData, error: counselorsError } = await supabase
         .from("profiles")
-        .select("id, role")
+        .select("id, role,username")
         .eq("role", "counselor");
 
       if (counselorsError) {
@@ -101,13 +102,15 @@ const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
               return {
                 id: counselor.id,
                 role: counselor.role || "counselor",
-                email: userData?.user?.email || "Unknown",
+                username: counselor.username || "Unknown",
+                // Optionally add email if you fetch it from userData
               };
             } catch (error) {
               console.error("Error fetching user email:", error);
               return {
                 id: counselor.id,
                 role: counselor.role || "counselor",
+                username: counselor.username || "Unknown",
                 email: "Unknown",
               };
             }
@@ -277,7 +280,7 @@ const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
                       <SelectItem value="none">None</SelectItem>
                       {counselors.map((counselor) => (
                         <SelectItem key={counselor.id} value={counselor.id}>
-                          {counselor.email || `Counselor (${counselor.id.substring(0, 6)})`}
+                          {counselor.username || `Counselor (${counselor.id.substring(0, 6)})`}
                         </SelectItem>
                       ))}
                     </SelectContent>
