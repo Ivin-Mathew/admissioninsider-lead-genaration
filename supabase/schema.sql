@@ -20,17 +20,16 @@ CREATE TABLE applications (
   planned_courses TEXT[] NOT NULL,
   preferred_colleges TEXT[],
   preferred_locations TEXT[] NOT NULL,
-  application_status TEXT NOT NULL DEFAULT 'pending'
+  application_status application_status NOT NULL DEFAULT 'started'
 );
 
 -- Create application status enum
 CREATE TYPE application_status AS ENUM (
-  'pending',
-  'review',
-  'interview',
-  'accepted',
-  'rejected',
-  'deferred'
+  'started',
+  'processing',
+  'documents_submitted',
+  'payments_processed',
+  'completed'
 );
 
 -- Create education level enum
@@ -40,6 +39,15 @@ CREATE TYPE education_level AS ENUM (
   'arts',
   'vocational',
   'other'
+);
+
+-- Create application notes table
+CREATE TABLE application_notes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  application_id UUID NOT NULL REFERENCES applications(application_id) ON DELETE CASCADE,
+  counselor_id UUID NOT NULL REFERENCES profiles(id),
+  note_text TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Create function for getting application status counts
@@ -53,14 +61,14 @@ RETURNS TABLE (
 )
 LANGUAGE SQL
 AS $$
-  SELECT 
+  SELECT
     application_status,
     COUNT(*) as count
-  FROM 
+  FROM
     applications
   WHERE
     (agent_filter IS NULL OR agent_id = agent_filter) AND
     (counselor_filter IS NULL OR counselor_id = counselor_filter)
-  GROUP BY 
+  GROUP BY
     application_status;
 $$;

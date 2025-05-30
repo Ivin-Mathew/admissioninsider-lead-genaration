@@ -26,11 +26,11 @@ import {
 } from "@/components/ui/select";
 
 export default function Signup() {
-  const [username, setUsername] = useState<string>("");
+  const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [role, setRole] = useState<"admin" | "counselor" | "agent">("agent");
+  const [role, setRole] = useState<"admin" | "counselor">("counselor");
 
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
@@ -53,7 +53,7 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
-      const data = await signup(username, email, password, role);
+      await signup(name, email, password, role);
 
       toast.success("Account created successfully", {
         description: "You can now log in with your credentials.",
@@ -93,14 +93,15 @@ export default function Signup() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-4">
+
             <div className="space-y-2">
               <div className="relative">
                 <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <Input
-                  type="username"
+                  type="name"
                   placeholder="Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   className="pl-10"
                   required
                 />
@@ -174,13 +175,12 @@ export default function Signup() {
               <Label htmlFor="role">User Role</Label>
               <Select
                 value={role}
-                onValueChange={(value) => setRole(value as "admin" | "counselor" | "agent")}
+                onValueChange={(value) => setRole(value as "admin" | "counselor")}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="agent">Agent</SelectItem>
                   <SelectItem value="counselor">Counselor</SelectItem>
                   <SelectItem value="admin">Admin</SelectItem>
                 </SelectContent>

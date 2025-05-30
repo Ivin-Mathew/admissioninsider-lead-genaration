@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  role TEXT NOT NULL DEFAULT 'agent'
+  role TEXT NOT NULL DEFAULT 'counselor'
 );
 
 -- Create a trigger to automatically create a profile when a user signs up
@@ -13,7 +13,7 @@ BEGIN
   INSERT INTO public.profiles (id, role, created_at, updated_at)
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'role', 'agent'),
+    COALESCE(NEW.raw_user_meta_data->>'role', 'counselor'),
     NOW(),
     NOW()
   );

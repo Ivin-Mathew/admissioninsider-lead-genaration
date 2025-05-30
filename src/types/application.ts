@@ -8,17 +8,16 @@ export enum EducationLevel {
     VOCATIONAL = 'vocational',
     OTHER = 'other'
   }
-  
+
   // Enum for application status
   export enum ApplicationStatus {
-    PENDING = 'pending',
-    REVIEW = 'review',
-    INTERVIEW = 'interview',
-    ACCEPTED = 'accepted',
-    REJECTED = 'rejected',
-    DEFERRED = 'deferred'
+    STARTED = 'started',
+    PROCESSING = 'processing',
+    DOCUMENTS_SUBMITTED = 'documents_submitted',
+    PAYMENTS_PROCESSED = 'payments_processed',
+    COMPLETED = 'completed'
   }
-  
+
   // Interface for the application form data
   export interface ApplicationFormData {
     clientName: string;
@@ -28,10 +27,9 @@ export enum EducationLevel {
     plannedCourses: string[];
     preferredLocations: string[];
     preferredColleges?: string[];
-    agentId?: string;
     counselorId?: string;
   }
-  
+
   // Interface for the application database record
   export interface Application {
     application_id: string; // UUID
@@ -42,19 +40,16 @@ export enum EducationLevel {
     planned_courses: string[];
     preferred_locations: string[];
     preferred_colleges: string[] | null;
-    agent_id: string | null;
-    agent_name: string | null;
     counselor_id: string | null;
     counselor_name: string | null;
     application_status: ApplicationStatus;
     created_at: string; // ISO date string
     updated_at: string; // ISO date string
   }
-  
+
   // Extended Application type with name fields
 export interface ExtendedApplication extends Application {
   counselor_name: string | null;
-  agent_name: string | null;
 }
 
   // Type for server response when creating a new application
@@ -65,19 +60,19 @@ export interface ExtendedApplication extends Application {
       code?: string;
     } | null;
   }
-  
+
   // Type for application status update
   export interface ApplicationStatusUpdate {
     application_id: string;
     application_status: ApplicationStatus;
   }
-  
+
   // Type for application with additional frontend metadata
   export interface ApplicationWithMeta extends Application {
     isNew?: boolean;
     statusChangedAt?: string;
   }
-  
+
   // Type for application filtering/sorting options
   export interface ApplicationListOptions {
     status?: ApplicationStatus;
@@ -86,7 +81,7 @@ export interface ExtendedApplication extends Application {
     limit?: number;
     offset?: number;
   }
-  
+
   // Type for paginated applications response
   export interface PaginatedApplications {
     data: Application[];

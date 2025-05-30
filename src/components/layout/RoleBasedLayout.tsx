@@ -35,7 +35,7 @@ export default function RoleBasedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading, logout, isAdmin, isCounselor, isAgent } = useAuth();
+  const { user, loading, logout, isAdmin, isCounselor } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
@@ -77,13 +77,7 @@ export default function RoleBasedLayout({
       title: "Applications",
       icon: <FileText className="h-5 w-5" />,
       href: "/applications",
-      visible: isAdmin,
-    },
-    {
-      title: "New Application",
-      icon: <FilePlus className="h-5 w-5" />,
-      href: "/applications/new",
-      visible: isCounselor || isAdmin,
+      visible: true, // Both admin and counselor can see applications
     },
     {
       title: "Users",
@@ -91,12 +85,7 @@ export default function RoleBasedLayout({
       href: "/users",
       visible: isAdmin,
     },
-    {
-      title: "Profile",
-      icon: <User className="h-5 w-5" />,
-      href: "/profile",
-      visible: true,
-    },
+
   ];
 
   const visibleNavItems = navItems.filter((item) => item.visible);

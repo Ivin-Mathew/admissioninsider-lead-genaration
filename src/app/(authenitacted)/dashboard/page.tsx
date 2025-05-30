@@ -13,17 +13,17 @@ import { toast } from "sonner";
 import { updateApplication } from "@/lib/applications.supabase"; // Import the new function
 
 export default function Dashboard() {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isCounselor } = useAuth();
   const { data, isLoading, error, refetch } = useDashboardData();
   const [localApplicationData, setLocalApplicationData] = useState<Application[]>([]);
   const [statsData, setStatsData] = useState({
     totalApplications: 0,
-    newApplications: 0,
-    inProgressApplications: 0,
+    startedApplications: 0,
+    processingApplications: 0,
+    documentsSubmittedApplications: 0,
+    paymentsProcessedApplications: 0,
     completedApplications: 0,
-    rejectedApplications: 0,
     totalCounselors: 0,
-    totalAgents: 0,
   });
 
   // Update local state when the remote data changes
@@ -32,12 +32,12 @@ export default function Dashboard() {
       setLocalApplicationData(data.applicationData || []);
       setStatsData({
         totalApplications: data.stats?.totalApplications ?? 0,
-        newApplications: data.stats?.newApplications ?? 0,
-        inProgressApplications: data.stats?.inProgressApplications ?? 0,
+        startedApplications: data.stats?.startedApplications ?? 0,
+        processingApplications: data.stats?.processingApplications ?? 0,
+        documentsSubmittedApplications: data.stats?.documentsSubmittedApplications ?? 0,
+        paymentsProcessedApplications: data.stats?.paymentsProcessedApplications ?? 0,
         completedApplications: data.stats?.completedApplications ?? 0,
-        rejectedApplications: data.stats?.rejectedApplications ?? 0,
         totalCounselors: data.stats?.totalCounselors ?? 0,
-        totalAgents: data.stats?.totalAgents ?? 0,
       });
     }
   }, [data]);
@@ -46,30 +46,30 @@ export default function Dashboard() {
   const handleApplicationUpdate = async (updatedApplication: Application) => {
     try {
       // Update the local state first for immediate UI feedback
-      setLocalApplicationData(prevData => 
-        prevData.map(app => 
-          app.application_id === updatedApplication.application_id 
-            ? updatedApplication 
+      setLocalApplicationData(prevData =>
+        prevData.map(app =>
+          app.application_id === updatedApplication.application_id
+            ? updatedApplication
             : app
         )
       );
-      
+
       // Find the original application to check if status changed
       const originalApp = localApplicationData.find(
         app => app.application_id === updatedApplication.application_id
       );
-      
+
       // Update stats based on changes
       if (originalApp && updatedApplication.application_status !== originalApp.application_status) {
         // Refetch the dashboard data to get updated stats
         await refetch();
       }
-      
+
       toast.success("Application updated successfully");
     } catch (error) {
       console.error("Error updating application:", error);
       toast.error("Failed to update application");
-      
+
       // Revert local state to match server state on error
       refetch();
     }
@@ -116,12 +116,12 @@ export default function Dashboard() {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">New</CardTitle>
+                  <CardTitle className="text-sm font-medium">Started</CardTitle>
                   <AlertCircle className="h-4 w-4 text-blue-500" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {statsData.newApplications}
+                    {statsData.startedApplications}
                   </div>
                 </CardContent>
               </Card>
@@ -129,13 +129,13 @@ export default function Dashboard() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">
-                    In Progress
+                    Processing
                   </CardTitle>
                   <Clock className="h-4 w-4 text-yellow-500" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {statsData.inProgressApplications}
+                    {statsData.processingApplications}
                   </div>
                 </CardContent>
               </Card>
@@ -171,25 +171,13 @@ export default function Dashboard() {
                   </CardContent>
                 </Card>
 
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      Total Agents
-                    </CardTitle>
-                    <Users className="h-4 w-4 text-gray-500" />
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-2xl font-bold">
-                      {statsData.totalAgents}
-                    </div>
-                  </CardContent>
-                </Card>
+
               </div>
             )}
           </>
         )}
         <ApplicationDataTable
-          userType={user?.role ?? "agent"}
+          userType={user?.role ?? "counselor"}
           applicationData={localApplicationData}
           onApplicationUpdated={handleApplicationUpdate}
         />
