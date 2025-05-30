@@ -5,11 +5,12 @@ import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, FileText, CheckCircle, Clock } from "lucide-react";
+import { Users, Plus, FileText, CheckCircle, Clock, Mail, User } from "lucide-react";
 import RoleBasedLayout from "@/components/layout/RoleBasedLayout";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { ApplicationStatus } from "@/types/application";
+import AddCounselorModal from "@/components/users/AddCounselorModal";
 
 interface CounselorStats {
   id: string;
@@ -125,10 +126,7 @@ export default function UsersPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Counselors</h1>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Counselor
-          </Button>
+          <AddCounselorModal onCounselorAdded={fetchCounselors} />
         </div>
 
         {counselors.length === 0 ? (
@@ -162,7 +160,7 @@ export default function UsersPage() {
                       </p>
                       <p className="text-sm text-gray-500">Total</p>
                     </div>
-                    
+
                     <div className="text-center">
                       <div className="flex items-center justify-center mb-2">
                         <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
@@ -172,7 +170,7 @@ export default function UsersPage() {
                       </p>
                       <p className="text-sm text-gray-500">Started</p>
                     </div>
-                    
+
                     <div className="text-center">
                       <div className="flex items-center justify-center mb-2">
                         <Clock className="h-5 w-5 text-yellow-500" />
@@ -182,7 +180,7 @@ export default function UsersPage() {
                       </p>
                       <p className="text-sm text-gray-500">Processing</p>
                     </div>
-                    
+
                     <div className="text-center">
                       <div className="flex items-center justify-center mb-2">
                         <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
@@ -192,7 +190,7 @@ export default function UsersPage() {
                       </p>
                       <p className="text-sm text-gray-500">Docs Submitted</p>
                     </div>
-                    
+
                     <div className="text-center">
                       <div className="flex items-center justify-center mb-2">
                         <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
@@ -202,7 +200,7 @@ export default function UsersPage() {
                       </p>
                       <p className="text-sm text-gray-500">Payments</p>
                     </div>
-                    
+
                     <div className="text-center">
                       <div className="flex items-center justify-center mb-2">
                         <CheckCircle className="h-5 w-5 text-green-500" />
@@ -213,7 +211,7 @@ export default function UsersPage() {
                       <p className="text-sm text-gray-500">Completed</p>
                     </div>
                   </div>
-                  
+
                   {counselor.totalApplications > 0 && (
                     <div className="mt-4 pt-4 border-t">
                       <div className="flex items-center justify-between text-sm text-gray-600">

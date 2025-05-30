@@ -47,7 +47,6 @@ const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
   onClose,
   onUpdate,
 }) => {
-  const [agents, setAgents] = useState<UserOption[]>([]);
   const [counselors, setCounselors] = useState<UserOption[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState("");
@@ -58,23 +57,21 @@ const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
       client_email: application.client_email || "",
       phone_number: application.phone_number,
       application_status: application.application_status,
-      agent_id: application.agent_id || "none",
       counselor_id: application.counselor_id || "none",
     },
   });
 
-  // Fetch agents and counselors when the modal opens
+  // Fetch counselors when the modal opens
   useEffect(() => {
     if (isOpen) {
       fetchUsers();
-      
+
       // Reset form with current application values
       form.reset({
         client_name: application.client_name,
         client_email: application.client_email || "",
         phone_number: application.phone_number,
         application_status: application.application_status,
-        agent_id: application.agent_id || "none",
         counselor_id: application.counselor_id || "none",
       });
     }
@@ -84,30 +81,7 @@ const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
     setIsLoading(true);
     setFetchError("");
     try {
-      // Fetch agents - with corrected field selection (id, role, email)
-      const { data: agentsData, error: agentsError } = await supabase
-        .from("profiles")
-        .select("id, role")
-        .eq("role", "agent");
-
-      if (agentsError) {
-        console.error("Error fetching agents:", agentsError);
-        throw new Error(agentsError.message);
-      }
-      
-      // Make sure we have valid data before setting state
-      if (agentsData) {
-        // Use role or ID for display instead of name
-        const processedAgents = agentsData.map(agent => ({
-          id: agent.id,
-          role: agent.role || "agent",
-        }));
-        setAgents(processedAgents);
-      } else {
-        setAgents([]);
-      }
-
-      // Fetch counselors - with corrected field selection
+      // Fetch counselors with email information
       const { data: counselorsData, error: counselorsError } = await supabase
         .from("profiles")
         .select("id, role")
@@ -117,15 +91,29 @@ const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
         console.error("Error fetching counselors:", counselorsError);
         throw new Error(counselorsError.message);
       }
-      
-      // Make sure we have valid data before setting state
+
+      // Get email information for each counselor from auth.users
       if (counselorsData) {
-        // Use role or ID for display instead of name
-        const processedCounselors = counselorsData.map(counselor => ({
-          id: counselor.id,
-          role: counselor.role || "counselor",
-        }));
-        setCounselors(processedCounselors);
+        const counselorsWithEmails = await Promise.all(
+          counselorsData.map(async (counselor) => {
+            try {
+              const { data: userData } = await supabase.auth.admin.getUserById(counselor.id);
+              return {
+                id: counselor.id,
+                role: counselor.role || "counselor",
+                email: userData?.user?.email || "Unknown",
+              };
+            } catch (error) {
+              console.error("Error fetching user email:", error);
+              return {
+                id: counselor.id,
+                role: counselor.role || "counselor",
+                email: "Unknown",
+              };
+            }
+          })
+        );
+        setCounselors(counselorsWithEmails);
       } else {
         setCounselors([]);
       }
@@ -142,9 +130,8 @@ const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
     setIsLoading(true);
     try {
       // Handle none value to be null
-      const agent_id = values.agent_id === "none" ? null : values.agent_id;
       const counselor_id = values.counselor_id === "none" ? null : values.counselor_id;
-      
+
       // Update application in Supabase
       const { data, error } = await supabase
         .from("applications")
@@ -153,7 +140,6 @@ const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
           client_email: values.client_email,
           phone_number: values.phone_number,
           application_status: values.application_status,
-          agent_id: agent_id,
           counselor_id: counselor_id,
           updated_at: new Date().toISOString(),
         })
@@ -163,15 +149,8 @@ const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
 
       if (error) throw error;
 
-      // Get agent display information
-      let agent_name = "Not Assigned";
-      if (agent_id) {
-        const foundAgent = agents.find(agent => agent.id === agent_id);
-        agent_name = foundAgent ? (foundAgent.email || "Agent") : "Unknown Agent";
-      }
-
       // Get counselor display information
-      let counselor_name = "Not Assigned";
+      let counselor_name = null;
       if (counselor_id) {
         const foundCounselor = counselors.find(counselor => counselor.id === counselor_id);
         counselor_name = foundCounselor ? (foundCounselor.email || "Counselor") : "Unknown Counselor";
@@ -180,7 +159,6 @@ const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
       // Create updated application with names included
       const updatedApplication = {
         ...data,
-        agent_name,
         counselor_name
       };
 
@@ -201,13 +179,13 @@ const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
         <DialogHeader>
           <DialogTitle>Edit Application</DialogTitle>
         </DialogHeader>
-        
+
         {fetchError && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
             Error loading data: {fetchError}
           </div>
         )}
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
@@ -223,7 +201,7 @@ const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="client_email"
@@ -237,7 +215,7 @@ const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="phone_number"
@@ -251,14 +229,14 @@ const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
                 </FormItem>
               )}
             />
-            
+
             <FormField
               control={form.control}
               name="application_status"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Status</FormLabel>
-                  <Select 
+                  <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
@@ -268,76 +246,46 @@ const EditApplicationModal: React.FC<EditApplicationModalProps> = ({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="review">In Review</SelectItem>
-                      <SelectItem value="accepted">Accepted</SelectItem>
-                      <SelectItem value="rejected">Rejected</SelectItem>
+                      <SelectItem value={ApplicationStatus.STARTED}>Started</SelectItem>
+                      <SelectItem value={ApplicationStatus.PROCESSING}>Processing</SelectItem>
+                      <SelectItem value={ApplicationStatus.DOCUMENTS_SUBMITTED}>Documents Submitted</SelectItem>
+                      <SelectItem value={ApplicationStatus.PAYMENTS_PROCESSED}>Payments Processed</SelectItem>
+                      <SelectItem value={ApplicationStatus.COMPLETED}>Completed</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="agent_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Assigned Agent</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select an agent" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {agents.map((agent) => (
-                          <SelectItem key={agent.id} value={agent.id}>
-                            {agent.email || `Agent (${agent.id.substring(0, 6)})`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="counselor_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Assigned Counselor</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a counselor" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">None</SelectItem>
-                        {counselors.map((counselor) => (
-                          <SelectItem key={counselor.id} value={counselor.id}>
-                            {counselor.email || `Counselor (${counselor.id.substring(0, 6)})`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+
+            <FormField
+              control={form.control}
+              name="counselor_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Assigned Counselor</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a counselor" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">None</SelectItem>
+                      {counselors.map((counselor) => (
+                        <SelectItem key={counselor.id} value={counselor.id}>
+                          {counselor.email || `Counselor (${counselor.id.substring(0, 6)})`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={onClose}>

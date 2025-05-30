@@ -43,6 +43,7 @@ export enum EducationLevel {
     counselor_id: string | null;
     counselor_name: string | null;
     application_status: ApplicationStatus;
+    notes: any[] | null; // JSONB array for notes
     created_at: string; // ISO date string
     updated_at: string; // ISO date string
   }

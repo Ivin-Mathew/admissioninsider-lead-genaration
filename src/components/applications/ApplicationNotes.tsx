@@ -20,52 +20,20 @@ interface Note {
 
 interface ApplicationNotesProps {
   applicationId: string;
+  notes?: Note[];
+  onNotesUpdate?: () => void;
 }
 
-export default function ApplicationNotes({ applicationId }: ApplicationNotesProps) {
-  const [notes, setNotes] = useState<Note[]>([]);
+export default function ApplicationNotes({ applicationId, notes: initialNotes = [], onNotesUpdate }: ApplicationNotesProps) {
+  const [notes, setNotes] = useState<Note[]>(initialNotes);
   const [newNote, setNewNote] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
 
-  // Fetch notes for the application
-  const fetchNotes = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from("application_notes")
-        .select(`
-          id,
-          note_text,
-          created_at,
-          counselor_id,
-          profiles!counselor_id(id, role)
-        `)
-        .eq("application_id", applicationId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      // Transform the data to include counselor email
-      const notesWithCounselor = await Promise.all(
-        data.map(async (note) => {
-          const { data: userData, error: userError } = await supabase.auth.admin.getUserById(note.counselor_id);
-          return {
-            ...note,
-            counselor_name: userData?.user?.email || "Unknown Counselor"
-          };
-        })
-      );
-
-      setNotes(notesWithCounselor);
-    } catch (error) {
-      console.error("Error fetching notes:", error);
-      toast.error("Failed to load notes");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Update notes when initialNotes prop changes
+  useEffect(() => {
+    setNotes(initialNotes);
+  }, [initialNotes]);
 
   // Add a new note
   const addNote = async () => {
@@ -73,29 +41,46 @@ export default function ApplicationNotes({ applicationId }: ApplicationNotesProp
 
     setIsSubmitting(true);
     try {
-      const { data, error } = await supabase
-        .from("application_notes")
-        .insert([
-          {
-            application_id: applicationId,
-            counselor_id: user.id,
-            note_text: newNote.trim(),
-          },
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Add the new note to the list with counselor info
-      const newNoteWithCounselor = {
-        ...data,
+      // Create new note object
+      const newNoteObj = {
+        id: crypto.randomUUID(),
+        note_text: newNote.trim(),
+        created_at: new Date().toISOString(),
+        counselor_id: user.id,
         counselor_name: user.email,
       };
 
-      setNotes([newNoteWithCounselor, ...notes]);
+      // Get current notes from the application
+      const { data: currentApp, error: fetchError } = await supabase
+        .from("applications")
+        .select("notes")
+        .eq("application_id", applicationId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Update the notes array
+      const updatedNotes = [newNoteObj, ...(currentApp.notes || [])];
+
+      // Update the application with new notes
+      const { error: updateError } = await supabase
+        .from("applications")
+        .update({
+          notes: updatedNotes,
+          updated_at: new Date().toISOString()
+        })
+        .eq("application_id", applicationId);
+
+      if (updateError) throw updateError;
+
+      setNotes(updatedNotes);
       setNewNote("");
       toast.success("Note added successfully");
+
+      // Call the callback to refresh parent component
+      if (onNotesUpdate) {
+        onNotesUpdate();
+      }
     } catch (error) {
       console.error("Error adding note:", error);
       toast.error("Failed to add note");
@@ -104,9 +89,7 @@ export default function ApplicationNotes({ applicationId }: ApplicationNotesProp
     }
   };
 
-  useEffect(() => {
-    fetchNotes();
-  }, [applicationId]);
+
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
@@ -141,11 +124,7 @@ export default function ApplicationNotes({ applicationId }: ApplicationNotesProp
 
         {/* Notes list */}
         <div className="space-y-3">
-          {isLoading ? (
-            <div className="text-center py-4">
-              <div className="animate-spin h-6 w-6 border-2 border-t-blue-500 border-r-transparent border-b-blue-500 border-l-transparent rounded-full mx-auto"></div>
-            </div>
-          ) : notes.length === 0 ? (
+          {notes.length === 0 ? (
             <div className="text-center py-4 text-gray-500">
               No notes yet. Add the first note above.
             </div>

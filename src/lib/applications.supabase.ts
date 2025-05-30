@@ -16,7 +16,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 /**
  * Submits an application to the "applications" table in Supabase.
- * 
+ *
  * @param applicationData - The application form data to be inserted.
  * @returns The newly created application record.
  * @throws An error if the insertion fails.
@@ -33,9 +33,9 @@ export async function submitApplication(applicationData: ApplicationFormData) {
         planned_courses: applicationData.plannedCourses,
         preferred_locations: applicationData.preferredLocations,
         preferred_colleges: applicationData.preferredColleges || [], // Default to empty array if not provided
-        application_status: "pending", // Default status for new applications
-        agent_id: applicationData.agentId || null, // Default to null if not provided
+        application_status: "started", // Default status for new applications
         counselor_id: applicationData.counselorId || null, // Default to null if not provided
+        notes: [], // Initialize with empty notes array
       },
     ])
     .select(); // Fetch the inserted record
@@ -162,7 +162,7 @@ export const fetchDashboardData = async (user: any, isAdmin: boolean, isCounselo
 
     // Create counselor and agent maps for quick lookup
     const profileMap = new Map();
-    
+
     profiles?.forEach(profile => {
       profileMap.set(profile.id, profile.role);
     });
@@ -249,12 +249,12 @@ export async function updateApplication(applicationId: string, updates: Partial<
           profileMap.set(profile.id, { name: profile.name || profile.email || "Unknown" });
         });
 
-        extendedData.agent_name = data.agent_id && profileMap.get(data.agent_id) 
-          ? profileMap.get(data.agent_id).name 
+        extendedData.agent_name = data.agent_id && profileMap.get(data.agent_id)
+          ? profileMap.get(data.agent_id).name
           : 'Not Assigned';
-          
-        extendedData.counselor_name = data.counselor_id && profileMap.get(data.counselor_id) 
-          ? profileMap.get(data.counselor_id).name 
+
+        extendedData.counselor_name = data.counselor_id && profileMap.get(data.counselor_id)
+          ? profileMap.get(data.counselor_id).name
           : 'Not Assigned';
       }
     }

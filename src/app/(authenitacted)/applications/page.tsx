@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 import { Application, ApplicationStatus } from "@/types/application";
 import { toast } from "sonner";
 import ApplicationNotes from "@/components/applications/ApplicationNotes";
+import EditApplicationModal from "@/components/applications/EditApplicationModal";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +32,7 @@ export default function ApplicationsPage() {
   const [applications, setApplications] = useState<Application[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   // Fetch applications based on user role
   const fetchApplications = async () => {
@@ -41,10 +42,7 @@ export default function ApplicationsPage() {
     try {
       let query = supabase
         .from("applications")
-        .select(`
-          *,
-          profiles!counselor_id(id, role)
-        `);
+        .select("*");
 
       // If counselor, only show their assigned applications
       if (isCounselor) {
@@ -55,13 +53,32 @@ export default function ApplicationsPage() {
 
       if (error) throw error;
 
-      // Get counselor names for applications
+      console.log("Fetched applications:", data);
+
+      // Get counselor names for applications that have counselor_id
       const applicationsWithNames = await Promise.all(
         data.map(async (app) => {
           let counselor_name = null;
           if (app.counselor_id) {
-            const { data: userData } = await supabase.auth.admin.getUserById(app.counselor_id);
-            counselor_name = userData?.user?.email || "Unknown Counselor";
+            try {
+              // First try to get from profiles table
+              const { data: profile, error: profileError } = await supabase
+                .from("profiles")
+                .select("id")
+                .eq("id", app.counselor_id)
+                .single();
+
+              if (!profileError && profile) {
+                // Get user email from auth
+                const { data: userData, error: userError } = await supabase.auth.admin.getUserById(app.counselor_id);
+                if (!userError && userData?.user?.email) {
+                  counselor_name = userData.user.email;
+                }
+              }
+            } catch (error) {
+              console.error("Error fetching counselor name:", error);
+              counselor_name = "Unknown Counselor";
+            }
           }
           return {
             ...app,
@@ -70,6 +87,7 @@ export default function ApplicationsPage() {
         })
       );
 
+      console.log("Applications with names:", applicationsWithNames);
       setApplications(applicationsWithNames);
     } catch (error) {
       console.error("Error fetching applications:", error);
@@ -106,6 +124,19 @@ export default function ApplicationsPage() {
       console.error("Error updating status:", error);
       toast.error("Failed to update status");
     }
+  };
+
+  // Handle application update from edit modal
+  const handleApplicationUpdate = (updatedApplication: Application) => {
+    setApplications(apps =>
+      apps.map(app =>
+        app.application_id === updatedApplication.application_id
+          ? updatedApplication
+          : app
+      )
+    );
+    // Refresh to get updated counselor names
+    fetchApplications();
   };
 
   useEffect(() => {
@@ -202,7 +233,7 @@ export default function ApplicationsPage() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Dialog>
@@ -217,16 +248,53 @@ export default function ApplicationsPage() {
                             <DialogTitle>Application Details - {application.client_name}</DialogTitle>
                           </DialogHeader>
                           <div className="space-y-4">
-                            {/* Application details would go here */}
-                            <ApplicationNotes applicationId={application.application_id} />
+                            {/* Application details */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <h4 className="font-semibold mb-2">Client Information</h4>
+                                <div className="space-y-2 text-sm">
+                                  <p><span className="font-medium">Name:</span> {application.client_name}</p>
+                                  <p><span className="font-medium">Email:</span> {application.client_email || "N/A"}</p>
+                                  <p><span className="font-medium">Phone:</span> {application.phone_number}</p>
+                                  <p><span className="font-medium">Completed Course:</span> {application.completed_course}</p>
+                                </div>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold mb-2">Preferences</h4>
+                                <div className="space-y-2 text-sm">
+                                  <p><span className="font-medium">Planned Courses:</span> {application.planned_courses?.join(", ")}</p>
+                                  <p><span className="font-medium">Preferred Locations:</span> {application.preferred_locations?.join(", ")}</p>
+                                  <p><span className="font-medium">Preferred Colleges:</span> {application.preferred_colleges?.join(", ") || "N/A"}</p>
+                                </div>
+                              </div>
+                            </div>
+                            <ApplicationNotes
+                              applicationId={application.application_id}
+                              notes={application.notes || []}
+                              onNotesUpdate={fetchApplications}
+                            />
                           </div>
                         </DialogContent>
                       </Dialog>
-                      
+
+                      {isAdmin && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedApplication(application);
+                            setIsEditModalOpen(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </Button>
+                      )}
+
                       {isCounselor && (
                         <Select
                           value={application.application_status}
-                          onValueChange={(value) => 
+                          onValueChange={(value) =>
                             updateApplicationStatus(application.application_id, value as ApplicationStatus)
                           }
                         >
@@ -250,6 +318,16 @@ export default function ApplicationsPage() {
           </div>
         )}
       </div>
+
+      {/* Edit Modal - Only for admin */}
+      {isAdmin && selectedApplication && (
+        <EditApplicationModal
+          application={selectedApplication}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onUpdate={handleApplicationUpdate}
+        />
+      )}
     </RoleBasedLayout>
   );
 }
