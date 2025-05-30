@@ -61,9 +61,9 @@ export default function RoleBasedLayout({
     return null;
   }
 
-  const getInitials = (email: string | undefined): string => {
-    if (!email) return "U";
-    return email.charAt(0).toUpperCase();
+  const getInitials = (name: string | undefined): string => {
+    if (!name) return "U";
+    return name.charAt(0).toUpperCase();
   };
 
   const navItems: NavItem[] = [
@@ -159,13 +159,13 @@ export default function RoleBasedLayout({
           </div>
           <div className="flex items-center space-x-4">
             <span className="text-sm font-medium hidden md:block">
-              {user.email} ({user.role} )
+              {user.name} ({user.role})
             </span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
                   <Avatar>
-                    <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
+                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>

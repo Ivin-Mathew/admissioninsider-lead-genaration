@@ -1,17 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Eye, Edit } from "lucide-react";
 import RoleBasedLayout from "@/components/layout/RoleBasedLayout";
-import { supabase } from "@/lib/supabase";
-import { Application, ApplicationStatus } from "@/types/application";
-import { toast } from "sonner";
+import { ApplicationStatus } from "@/types/application";
 import ApplicationNotes from "@/components/applications/ApplicationNotes";
 import EditApplicationModal from "@/components/applications/EditApplicationModal";
+import { useApplicationsWithCounselors, useUpdateApplicationStatus } from "@/hooks/useApplicationsData";
 import {
   Dialog,
   DialogContent,
@@ -28,120 +27,28 @@ import {
 } from "@/components/ui/select";
 
 export default function ApplicationsPage() {
-  const { user, isAdmin, isCounselor } = useAuth();
-  const [applications, setApplications] = useState<Application[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const { isAdmin, isCounselor } = useAuth();
+  const { data: applications = [], isLoading, error, refetch } = useApplicationsWithCounselors();
+  const { mutate: updateStatus } = useUpdateApplicationStatus();
+  const [selectedApplication, setSelectedApplication] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  // Fetch applications based on user role
-  const fetchApplications = async () => {
-    if (!user) return;
-
-    setIsLoading(true);
-    try {
-      let query = supabase
-        .from("applications")
-        .select("*");
-
-      // If counselor, only show their assigned applications
-      if (isCounselor) {
-        query = query.eq("counselor_id", user.id);
-      }
-
-      const { data, error } = await query.order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      console.log("Fetched applications:", data);
-
-      // Get counselor names for applications that have counselor_id
-      const applicationsWithNames = await Promise.all(
-        data.map(async (app) => {
-          let counselor_name = null;
-          if (app.counselor_id) {
-            try {
-              // First try to get from profiles table
-              const { data: profile, error: profileError } = await supabase
-                .from("profiles")
-                .select("id")
-                .eq("id", app.counselor_id)
-                .single();
-
-              if (!profileError && profile) {
-                // Get user email from auth
-                const { data: userData, error: userError } = await supabase.auth.admin.getUserById(app.counselor_id);
-                if (!userError && userData?.user?.email) {
-                  counselor_name = userData.user.email;
-                }
-              }
-            } catch (error) {
-              console.error("Error fetching counselor name:", error);
-              counselor_name = "Unknown Counselor";
-            }
-          }
-          return {
-            ...app,
-            counselor_name,
-          };
-        })
-      );
-
-      console.log("Applications with names:", applicationsWithNames);
-      setApplications(applicationsWithNames);
-    } catch (error) {
-      console.error("Error fetching applications:", error);
-      toast.error("Failed to load applications");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Update application status
-  const updateApplicationStatus = async (applicationId: string, newStatus: ApplicationStatus) => {
-    try {
-      const { error } = await supabase
-        .from("applications")
-        .update({
-          application_status: newStatus,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("application_id", applicationId);
-
-      if (error) throw error;
-
-      // Update local state
-      setApplications(apps =>
-        apps.map(app =>
-          app.application_id === applicationId
-            ? { ...app, application_status: newStatus }
-            : app
-        )
-      );
-
-      toast.success("Application status updated");
-    } catch (error) {
-      console.error("Error updating status:", error);
-      toast.error("Failed to update status");
-    }
-  };
-
   // Handle application update from edit modal
-  const handleApplicationUpdate = (updatedApplication: Application) => {
-    setApplications(apps =>
-      apps.map(app =>
-        app.application_id === updatedApplication.application_id
-          ? updatedApplication
-          : app
-      )
-    );
-    // Refresh to get updated counselor names
-    fetchApplications();
+  const handleApplicationUpdate = () => {
+    // Refresh applications data
+    refetch();
   };
 
-  useEffect(() => {
-    fetchApplications();
-  }, [user, isAdmin, isCounselor]);
+  // Handle error display
+  if (error) {
+    return (
+      <RoleBasedLayout>
+        <div className="text-center py-8">
+          <p className="text-red-500">Error loading applications: {error.message}</p>
+        </div>
+      </RoleBasedLayout>
+    );
+  }
 
   const getStatusColor = (status: ApplicationStatus) => {
     switch (status) {
@@ -271,7 +178,7 @@ export default function ApplicationsPage() {
                             <ApplicationNotes
                               applicationId={application.application_id}
                               notes={application.notes || []}
-                              onNotesUpdate={fetchApplications}
+                              onNotesUpdate={refetch}
                             />
                           </div>
                         </DialogContent>
@@ -295,7 +202,7 @@ export default function ApplicationsPage() {
                         <Select
                           value={application.application_status}
                           onValueChange={(value) =>
-                            updateApplicationStatus(application.application_id, value as ApplicationStatus)
+                            updateStatus({ applicationId: application.application_id, newStatus: value as ApplicationStatus })
                           }
                         >
                           <SelectTrigger className="w-48">

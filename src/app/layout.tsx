@@ -11,20 +11,19 @@ export const metadata: Metadata = {
   title: "Peer Connect - Admission Insider",
   description: "Your admission insider platform",
 };
-
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <Providers>
-          {children}
-          <Toaster richColors />
-        </Providers>
-      </body>
-    </html>
+      <html lang="en" suppressHydrationWarning>
+        <body className={inter.className}>
+          <Providers>
+            {children}
+            <Toaster richColors />
+          </Providers>
+        </body>
+      </html>
   );
 }

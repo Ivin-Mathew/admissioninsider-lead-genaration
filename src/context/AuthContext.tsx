@@ -191,7 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from("profiles")
           .upsert({
             id: data.user.id,
-            name: name,
+            username: name,
             role: role,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()

@@ -1,104 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Plus, FileText, CheckCircle, Clock, Mail, User } from "lucide-react";
+import { Users, FileText, CheckCircle, Clock } from "lucide-react";
 import RoleBasedLayout from "@/components/layout/RoleBasedLayout";
-import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
-import { ApplicationStatus } from "@/types/application";
 import AddCounselorModal from "@/components/users/AddCounselorModal";
-
-interface CounselorStats {
-  id: string;
-  email: string;
-  totalApplications: number;
-  startedApplications: number;
-  processingApplications: number;
-  documentsSubmittedApplications: number;
-  paymentsProcessedApplications: number;
-  completedApplications: number;
-}
+import { useCounselorsWithStats } from "@/hooks/useCounselors";
 
 export default function UsersPage() {
-  const { user, isAdmin } = useAuth();
-  const [counselors, setCounselors] = useState<CounselorStats[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { isAdmin } = useAuth();
+  const { data: counselors = [], isLoading, error, refetch } = useCounselorsWithStats();
 
-  // Fetch counselors and their statistics
-  const fetchCounselors = async () => {
-    if (!isAdmin) return;
 
-    setIsLoading(true);
-    try {
-      // Get all counselors from profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, role")
-        .eq("role", "counselor");
 
-      if (profilesError) throw profilesError;
-
-      // Get user details and application stats for each counselor
-      const counselorStats = await Promise.all(
-        profiles.map(async (profile) => {
-          // Get user email from auth
-          const { data: userData } = await supabase.auth.admin.getUserById(profile.id);
-          const email = userData?.user?.email || "Unknown";
-
-          // Get application statistics
-          const { data: applications, error: appsError } = await supabase
-            .from("applications")
-            .select("application_status")
-            .eq("counselor_id", profile.id);
-
-          if (appsError) {
-            console.error("Error fetching applications for counselor:", appsError);
-            return {
-              id: profile.id,
-              email,
-              totalApplications: 0,
-              startedApplications: 0,
-              processingApplications: 0,
-              documentsSubmittedApplications: 0,
-              paymentsProcessedApplications: 0,
-              completedApplications: 0,
-            };
-          }
-
-          // Calculate statistics
-          const stats = {
-            id: profile.id,
-            email,
-            totalApplications: applications.length,
-            startedApplications: applications.filter(app => app.application_status === ApplicationStatus.STARTED).length,
-            processingApplications: applications.filter(app => app.application_status === ApplicationStatus.PROCESSING).length,
-            documentsSubmittedApplications: applications.filter(app => app.application_status === ApplicationStatus.DOCUMENTS_SUBMITTED).length,
-            paymentsProcessedApplications: applications.filter(app => app.application_status === ApplicationStatus.PAYMENTS_PROCESSED).length,
-            completedApplications: applications.filter(app => app.application_status === ApplicationStatus.COMPLETED).length,
-          };
-
-          return stats;
-        })
-      );
-
-      setCounselors(counselorStats);
-    } catch (error) {
-      console.error("Error fetching counselors:", error);
-      toast.error("Failed to load counselors");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isAdmin) {
-      fetchCounselors();
-    }
-  }, [isAdmin]);
+  // Handle error display
+  if (error) {
+    return (
+      <RoleBasedLayout>
+        <div className="text-center py-8">
+          <p className="text-red-500">Error loading counselors: {error.message}</p>
+        </div>
+      </RoleBasedLayout>
+    );
+  }
 
   // Redirect non-admin users
   if (!isAdmin) {
@@ -126,7 +51,7 @@ export default function UsersPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Counselors</h1>
-          <AddCounselorModal onCounselorAdded={fetchCounselors} />
+          <AddCounselorModal onCounselorAdded={refetch} />
         </div>
 
         {counselors.length === 0 ? (
@@ -144,7 +69,7 @@ export default function UsersPage() {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Users className="h-5 w-5" />
-                      {counselor.email}
+                      {counselor.username}
                     </CardTitle>
                     <Badge variant="secondary">Counselor</Badge>
                   </div>

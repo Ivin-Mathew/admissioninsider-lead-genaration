@@ -21,8 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { toast } from "sonner";
+import { useCreateCounselor } from "@/hooks/useCounselors";
 
 const formSchema = z
   .object({
@@ -46,7 +45,7 @@ const AddCounselorModal: React.FC<AddCounselorModalProps> = ({
   onCounselorAdded,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const { mutate: createCounselor, isPending: isLoading } = useCreateCounselor();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -58,51 +57,14 @@ const AddCounselorModal: React.FC<AddCounselorModalProps> = ({
     },
   });
 
-  const onSubmit = async (data: FormValues) => {
-    setIsLoading(true);
-    try {
-      // Create user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            name: data.username,
-            role: "counselor",
-          },
-        },
-      });
-
-      if (authError) {
-        throw authError;
-      }
-
-      if (authData.user) {
-        // Create or update the profile
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .upsert({
-            id: authData.user.id,
-            role: "counselor",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          });
-
-        if (profileError) {
-          throw profileError;
-        }
-
-        toast.success("Counselor created successfully");
+  const onSubmit = (data: FormValues) => {
+    createCounselor(data, {
+      onSuccess: () => {
         form.reset();
         setIsOpen(false);
         onCounselorAdded();
-      }
-    } catch (error: any) {
-      console.error("Error creating counselor:", error);
-      toast.error("Failed to create counselor: " + (error.message || "Unknown error"));
-    } finally {
-      setIsLoading(false);
-    }
+      },
+    });
   };
 
   return (
