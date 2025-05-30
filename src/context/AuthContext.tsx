@@ -11,7 +11,8 @@ import { useRouter } from "next/navigation";
 interface User {
   id: string;
   email: string;
-  role: "admin" | "counselor" | "agent";
+  name:string;
+  role: "admin" | "counselor";
 }
 
 interface AuthContextType {
@@ -21,12 +22,12 @@ interface AuthContextType {
   signup: (
     email: string,
     password: string,
-    role?: "admin" | "counselor" | "agent"
+    name:string,
+    role?: "admin" | "counselor",
   ) => Promise<any>;
   logout: () => Promise<void>;
   isAdmin: boolean;
   isCounselor: boolean;
-  isAgent: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -61,14 +62,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           const { data: profile, error: profileError } = await supabase
             .from("profiles")
-            .select("role")
+            .select("username,role")
             .eq("id", authUser.id)
             .single();
           if (profileError) throw profileError;
           setUser({
             id: authUser.id,
             email: authUser.email || "",
-            role: profile?.role || "agent",
+            name: profile?.username,
+            role: profile?.role || "counselor",
           });
           // Don't redirect here - user may already be on dashboard
         }
@@ -95,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               if (updatedAuthUser) {
                 const { data: profile, error: profileError } = await supabase
                   .from("profiles")
-                  .select("role")
+                  .select("username,role")
                   .eq("id", updatedAuthUser.id)
                   .single();
                 if (profileError) {
@@ -105,7 +107,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser({
                   id: updatedAuthUser.id,
                   email: updatedAuthUser.email || "",
-                  role: profile?.role || "agent",
+                  name:profile?.username,
+                  role: profile?.role || "counselor",
                 });
                 // Don't automatically redirect - let the page handle it
               }
@@ -162,7 +165,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signup = async (
     email: string,
     password: string,
-    role: "admin" | "counselor" | "agent" = "agent"
+    name: string,
+    role: "admin" | "counselor" = "counselor"
   ) => {
     try {
       // Simple signup without email confirmation
@@ -171,10 +175,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
         options: {
           data: {
-            role: role
+            name: name,
+            role: role,
           },
-          // Skip email confirmation
-          emailRedirectTo: undefined
         }
       });
 
@@ -188,6 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from("profiles")
           .upsert({
             id: data.user.id,
+            username: name,
             role: role,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
@@ -247,7 +251,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     isAdmin: user?.role === "admin",
     isCounselor: user?.role === "counselor",
-    isAgent: user?.role === "agent",
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

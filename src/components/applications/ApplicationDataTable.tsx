@@ -74,10 +74,6 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
   const getColumns = () => {
     // Common columns for all user types
     const commonColumns = [
-      columnHelper.accessor("client_name", {
-        header: "Client Name",
-        cell: (info) => info.getValue(),
-      }),
       columnHelper.accessor("application_status", {
         header: "Status",
         cell: (info) => (
@@ -96,6 +92,10 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
           </Badge>
         ),
       }),
+      columnHelper.accessor("client_name", {
+        header: "Client Name",
+        cell: (info) => info.getValue(),
+      }),
       columnHelper.accessor("created_at", {
         header: "Created",
         cell: (info) => formatDate(info.getValue()),
@@ -105,25 +105,7 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
     // Admin sees everything
     if (userType === "admin") {
       return [
-        columnHelper.accessor("application_id", {
-          header: "ID",
-          cell: (info) => (
-            <span className="text-xs text-gray-500">
-              {info.getValue()?.substring(0, 8) ?? "N/A"}...
-            </span>
-          ),
-        }),
         ...commonColumns,
-        windowWidth > 768 &&
-          columnHelper.accessor("client_email", {
-            header: "Email",
-            cell: (info) => info.getValue(),
-          }),
-        windowWidth > 1024 &&
-          columnHelper.accessor("phone_number", {
-            header: "Phone",
-            cell: (info) => info.getValue(),
-          }),
         windowWidth > 1280 &&
           columnHelper.accessor("preferred_locations", {
             header: "Locations",
@@ -133,11 +115,6 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
           columnHelper.accessor("preferred_colleges", {
             header: "Colleges",
             cell: (info) => formatArray(info.getValue()),
-          }),
-        windowWidth > 1440 &&
-          columnHelper.accessor("agent_name", {
-            header: "Agent",
-            cell: (info) => <span className="text-xs">{info.getValue() || "None"}</span>,
           }),
         windowWidth > 1440 &&
           columnHelper.accessor("counselor_name", {

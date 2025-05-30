@@ -35,7 +35,7 @@ export default function RoleBasedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading, logout, isAdmin, isCounselor, isAgent } = useAuth();
+  const { user, loading, logout, isAdmin, isCounselor } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
@@ -61,9 +61,9 @@ export default function RoleBasedLayout({
     return null;
   }
 
-  const getInitials = (email: string | undefined): string => {
-    if (!email) return "U";
-    return email.charAt(0).toUpperCase();
+  const getInitials = (name: string | undefined): string => {
+    if (!name) return "U";
+    return name.charAt(0).toUpperCase();
   };
 
   const navItems: NavItem[] = [
@@ -77,13 +77,7 @@ export default function RoleBasedLayout({
       title: "Applications",
       icon: <FileText className="h-5 w-5" />,
       href: "/applications",
-      visible: isAdmin,
-    },
-    {
-      title: "New Application",
-      icon: <FilePlus className="h-5 w-5" />,
-      href: "/applications/new",
-      visible: isCounselor || isAdmin,
+      visible: true, // Both admin and counselor can see applications
     },
     {
       title: "Users",
@@ -91,12 +85,7 @@ export default function RoleBasedLayout({
       href: "/users",
       visible: isAdmin,
     },
-    {
-      title: "Profile",
-      icon: <User className="h-5 w-5" />,
-      href: "/profile",
-      visible: true,
-    },
+
   ];
 
   const visibleNavItems = navItems.filter((item) => item.visible);
@@ -170,13 +159,13 @@ export default function RoleBasedLayout({
           </div>
           <div className="flex items-center space-x-4">
             <span className="text-sm font-medium hidden md:block">
-              {user.email} ({user.role} )
+              {user.name} ({user.role})
             </span>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
                   <Avatar>
-                    <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
+                    <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>

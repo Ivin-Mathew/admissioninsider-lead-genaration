@@ -56,7 +56,7 @@ interface ApplicationFormModalProps {
   onApplicationCreated?: () => Promise<void>;
 }
 
-const ApplicationFormModal: React.FC<ApplicationFormModalProps> = ({ 
+const ApplicationFormModal: React.FC<ApplicationFormModalProps> = ({
   onApplicationCreated = async () => {} // Default empty function if not provided
 }) => {
   const { user } = useAuth();
@@ -187,16 +187,15 @@ const ApplicationFormModal: React.FC<ApplicationFormModalProps> = ({
         plannedCourses: filteredCourses,
         preferredLocations: filteredLocations,
         preferredColleges: filteredColleges,
-        agentId: user?.role === 'agent' ? user?.id : undefined,
         counselorId: user?.role === 'counselor' ? user?.id : undefined,
       };
-      
+
       console.log(submissionData);
       const response = await createApplication(submissionData);
-      
+
       // Call the onApplicationCreated callback after successful creation
       await onApplicationCreated();
-      
+
       handleClose();
     } catch (error) {
       console.error("Error submitting application:", error);
