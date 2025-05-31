@@ -62,10 +62,6 @@ export const fetchDashboardData = async (user: any, isAdmin: boolean, isCounselo
       .from("applications")
       .select("*", { count: "exact" });
 
-    if (isAgent) {
-      applicationsQuery = applicationsQuery.eq("agent_id", user.id);
-    }
-
     if (isCounselor) {
       applicationsQuery = applicationsQuery.eq("counselor_id", user.id);
     }
@@ -76,9 +72,7 @@ export const fetchDashboardData = async (user: any, isAdmin: boolean, isCounselo
 
     const { data: statusCounts, error: statusError } = await supabase.rpc(
       "get_application_status_counts",
-      isAgent
-        ? { agent_filter: user.id }
-        : isCounselor
+      isCounselor
         ? { counselor_filter: user.id }
         : { agent_filter: null, counselor_filter: null }
     );
@@ -97,9 +91,7 @@ export const fetchDashboardData = async (user: any, isAdmin: boolean, isCounselo
         .from("applications")
         .select("application_status, count(*)");
 
-      if (isAgent) {
-        statusQuery = statusQuery.eq("agent_id", user.id);
-      } else if (isCounselor) {
+      if (isCounselor) {
         statusQuery = statusQuery.eq("counselor_id", user.id);
       }
 
@@ -143,14 +135,8 @@ export const fetchDashboardData = async (user: any, isAdmin: boolean, isCounselo
         .eq("role", "counselor");
       if (counselorError) throw counselorError;
 
-      const { count: agentCount, error: agentError } = await supabase
-        .from("profiles")
-        .select("*", { count: "exact" })
-        .eq("role", "agent");
-      if (agentError) throw agentError;
-
       totalCounselors = counselorCount || 0;
-      totalAgents = agentCount || 0;
+      totalAgents = 0; // No agents in the system anymore
     }
 
     // First get all profiles to use for lookups
@@ -170,10 +156,6 @@ export const fetchDashboardData = async (user: any, isAdmin: boolean, isCounselo
     // Fetch application data for the table
     let applicationQuery = supabase.from("applications").select("*");
 
-    if (isAgent) {
-      applicationQuery = applicationQuery.eq("agent_id", user.id);
-    }
-
     if (isCounselor) {
       applicationQuery = applicationQuery.eq("counselor_id", user.id);
     }
@@ -186,7 +168,6 @@ export const fetchDashboardData = async (user: any, isAdmin: boolean, isCounselo
     const processedApplications: ExtendedApplication[] = applications?.map((app: any) => ({
       ...app,
       counselor_name: app.counselor_id ? profileMap.get(app.counselor_id) || 'Not Found' : 'Not Assigned',
-      agent_name: app.agent_id ? profileMap.get(app.agent_id) || 'Not Found' : 'Not Assigned',
     })) || [];
 
     return {
@@ -227,36 +208,24 @@ export async function updateApplication(applicationId: string, updates: Partial<
 
     if (error) throw error;
 
-    // If the application has an agent or counselor, fetch their names
+    // If the application has a counselor, fetch their username
     let extendedData: ExtendedApplication = { ...data };
 
-    if (data.agent_id || data.counselor_id) {
-      const idsToFetch = [
-        ...(data.agent_id ? [data.agent_id] : []),
-        ...(data.counselor_id ? [data.counselor_id] : []),
-      ];
+    if (data.counselor_id) {
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", data.counselor_id)
+        .single();
 
-      if (idsToFetch.length > 0) {
-        const { data: profiles, error: profileError } = await supabase
-          .from("profiles")
-          .select("id, name, email")
-          .in("id", idsToFetch);
-
-        if (profileError) throw profileError;
-
-        const profileMap = new Map();
-        profiles?.forEach(profile => {
-          profileMap.set(profile.id, { name: profile.name || profile.email || "Unknown" });
-        });
-
-        extendedData.agent_name = data.agent_id && profileMap.get(data.agent_id)
-          ? profileMap.get(data.agent_id).name
-          : 'Not Assigned';
-
-        extendedData.counselor_name = data.counselor_id && profileMap.get(data.counselor_id)
-          ? profileMap.get(data.counselor_id).name
-          : 'Not Assigned';
+      if (profileError) {
+        console.error("Error fetching counselor profile:", profileError);
+        extendedData.counselor_name = 'Unknown Counselor';
+      } else {
+        extendedData.counselor_name = profile?.username || 'Unknown Counselor';
       }
+    } else {
+      extendedData.counselor_name = null;
     }
 
     return extendedData;

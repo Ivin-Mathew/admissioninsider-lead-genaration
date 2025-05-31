@@ -79,12 +79,16 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
         cell: (info) => (
           <Badge
             className={
-              info.getValue() === "pending"
-                ? "bg-yellow-500"
-                : info.getValue() === ApplicationStatus.ACCEPTED
-                ? "bg-green-500"
-                : info.getValue() === ApplicationStatus.REVIEW
+              info.getValue() === ApplicationStatus.STARTED
                 ? "bg-blue-500"
+                : info.getValue() === ApplicationStatus.PROCESSING
+                ? "bg-yellow-500"
+                : info.getValue() === ApplicationStatus.DOCUMENTS_SUBMITTED
+                ? "bg-purple-500"
+                : info.getValue() === ApplicationStatus.PAYMENTS_PROCESSED
+                ? "bg-orange-500"
+                : info.getValue() === ApplicationStatus.COMPLETED
+                ? "bg-green-500"
                 : "bg-gray-500"
             }
           >
@@ -401,14 +405,14 @@ const ApplicationDataTable: React.FC<ApplicationDataTableProps> = ({
           onClose={() => setIsViewModalOpen(false)}
         />
       )}
-      
+
       {/* Edit Modal - Only for admin */}
       {userType === "admin" && selectedApplication && (
         <EditApplicationModal
           application={selectedApplication}
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
-          onUpdate={handleApplicationUpdate}
+          onUpdate={() => onApplicationUpdated && onApplicationUpdated({} as Application)}
         />
       )}
     </Card>
