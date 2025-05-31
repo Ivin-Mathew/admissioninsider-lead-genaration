@@ -100,21 +100,11 @@ const RowDataModal: React.FC<RowDataModalProps> = ({
             </div>
 
             <div className="mt-6 space-y-4 border-t pt-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Agent ID</p>
-                    <p className="text-base">{application.agent_name}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <User className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">Counselor ID</p>
-                    <p className="text-base">{application.counselor_name}</p>
-                  </div>
+              <div className="flex items-center gap-2">
+                <User className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Assigned Counselor</p>
+                  <p className="text-base">{application.counselor_name || "Not Assigned"}</p>
                 </div>
               </div>
 

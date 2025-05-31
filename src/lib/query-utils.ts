@@ -11,14 +11,14 @@ export const queryKeys = {
     stats: () => [...queryKeys.counselors.all, 'stats'] as const,
     options: () => [...queryKeys.counselors.all, 'options'] as const,
   },
-  
+
   // Application queries
   applications: {
     all: ['applications'] as const,
-    withCounselors: (userId: string, isAdmin: boolean, isCounselor: boolean) => 
+    withCounselors: (userId: string, isAdmin: boolean, isCounselor: boolean) =>
       [...queryKeys.applications.all, 'with-counselors', userId, isAdmin, isCounselor] as const,
   },
-  
+
   // Dashboard queries
   dashboard: {
     all: ['dashboardData'] as const,
@@ -31,7 +31,7 @@ export const queryKeys = {
  * Development helper to log query information
  * Only works in development mode
  */
-export const logQueryInfo = (queryKey: unknown[], data: unknown, status: string) => {
+export const logQueryInfo = (queryKey: readonly unknown[], data: unknown, status: string) => {
   if (process.env.NODE_ENV === 'development') {
     console.group(`🔍 Query: ${JSON.stringify(queryKey)}`);
     console.log('Status:', status);
@@ -75,20 +75,20 @@ export const queryConfig = {
     staleTime: 0,
     refetchInterval: 5000,
   },
-  
+
   // Standard caching for most queries
   standard: {
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: 1,
   },
-  
+
   // Long-term caching for static data
   static: {
     staleTime: 30 * 60 * 1000, // 30 minutes
     retry: 1,
     refetchOnWindowFocus: false,
   },
-  
+
   // No caching for sensitive data
   noCache: {
     staleTime: 0,
@@ -105,12 +105,12 @@ export const mutationConfig = {
   standard: {
     retry: 1,
   },
-  
+
   // Critical mutations (no retry)
   critical: {
     retry: 0,
   },
-  
+
   // Background mutations (multiple retries)
   background: {
     retry: 3,

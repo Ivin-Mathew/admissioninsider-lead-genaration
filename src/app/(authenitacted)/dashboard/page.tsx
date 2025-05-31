@@ -10,20 +10,18 @@ import RoleBasedLayout from "@/components/layout/RoleBasedLayout";
 import ApplicationDataTable from "@/components/applications/ApplicationDataTable";
 import { Application } from "@/types/application";
 import { toast } from "sonner";
-import { updateApplication } from "@/lib/applications.supabase"; // Import the new function
-
 export default function Dashboard() {
-  const { user, isAdmin, isCounselor } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { data, isLoading, error, refetch } = useDashboardData();
   const [localApplicationData, setLocalApplicationData] = useState<Application[]>([]);
   const [statsData, setStatsData] = useState({
     totalApplications: 0,
-    startedApplications: 0,
-    processingApplications: 0,
-    documentsSubmittedApplications: 0,
-    paymentsProcessedApplications: 0,
+    newApplications: 0,
+    inProgressApplications: 0,
     completedApplications: 0,
+    rejectedApplications: 0,
     totalCounselors: 0,
+    totalAgents: 0,
   });
 
   // Update local state when the remote data changes
@@ -32,12 +30,12 @@ export default function Dashboard() {
       setLocalApplicationData(data.applicationData || []);
       setStatsData({
         totalApplications: data.stats?.totalApplications ?? 0,
-        startedApplications: data.stats?.startedApplications ?? 0,
-        processingApplications: data.stats?.processingApplications ?? 0,
-        documentsSubmittedApplications: data.stats?.documentsSubmittedApplications ?? 0,
-        paymentsProcessedApplications: data.stats?.paymentsProcessedApplications ?? 0,
+        newApplications: data.stats?.newApplications ?? 0,
+        inProgressApplications: data.stats?.inProgressApplications ?? 0,
         completedApplications: data.stats?.completedApplications ?? 0,
+        rejectedApplications: data.stats?.rejectedApplications ?? 0,
         totalCounselors: data.stats?.totalCounselors ?? 0,
+        totalAgents: data.stats?.totalAgents ?? 0,
       });
     }
   }, [data]);
@@ -116,12 +114,12 @@ export default function Dashboard() {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Started</CardTitle>
+                  <CardTitle className="text-sm font-medium">New</CardTitle>
                   <AlertCircle className="h-4 w-4 text-blue-500" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {statsData.startedApplications}
+                    {statsData.newApplications}
                   </div>
                 </CardContent>
               </Card>
@@ -129,13 +127,13 @@ export default function Dashboard() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">
-                    Processing
+                    In Progress
                   </CardTitle>
                   <Clock className="h-4 w-4 text-yellow-500" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {statsData.processingApplications}
+                    {statsData.inProgressApplications}
                   </div>
                 </CardContent>
               </Card>
