@@ -1,3 +1,5 @@
+
+
 # Admission Insider Lead Generation App
 
 This is a Next.js application with Supabase authentication and database integration.
